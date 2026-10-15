@@ -1,0 +1,237 @@
+import 'package:appflowy_ui/appflowy_ui.dart';
+import 'package:flutter/material.dart';
+
+import '../../design_system/workspace_icon.dart';
+import '../application/workspace_cubit.dart';
+
+enum TaskFilter {
+  all('Todas', 'type_page'),
+  pending('Pendientes', 'type_todo'),
+  completed('Completadas', 'toolbar_check');
+
+  const TaskFilter(this.label, this.icon);
+  final String label;
+  final String icon;
+}
+
+class WorkspaceIconButton extends StatelessWidget {
+  const WorkspaceIconButton(
+      {super.key,
+      required this.label,
+      required this.icon,
+      required this.onTap});
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+        message: label,
+        excludeFromSemantics: true,
+        child: Semantics(
+          button: true,
+          container: true,
+          label: label,
+          child: AFGhostButton.normal(
+            onTap: onTap,
+            padding: const EdgeInsets.all(12),
+            builder: (context, _, __) => Icon(icon,
+                size: 20,
+                color: AppFlowyTheme.of(context).iconColorScheme.secondary),
+          ),
+        ),
+      );
+}
+
+class WorkspaceSidebar extends StatelessWidget {
+  const WorkspaceSidebar(
+      {super.key,
+      required this.filter,
+      required this.state,
+      required this.onSelect,
+      required this.onCreate});
+
+  final TaskFilter filter;
+  final WorkspaceState state;
+  final ValueChanged<TaskFilter> onSelect;
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = AppFlowyTheme.of(context);
+    return ColoredBox(
+      color: theme.surfaceContainerColorScheme.layer01,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: theme.fillColorScheme.themeThick,
+                    borderRadius: BorderRadius.circular(theme.borderRadius.m),
+                  ),
+                  child: Text('M',
+                      style: theme.textStyle.body
+                          .enhanced(color: theme.textColorScheme.onFill)),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                    child: Text('Mi espacio',
+                        style: theme.textStyle.body
+                            .enhanced(color: theme.textColorScheme.primary))),
+              ]),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 24, 12, 12),
+                    child: Text('ESPACIO PRIVADO',
+                        style: theme.textStyle.caption
+                            .enhanced(color: theme.textColorScheme.secondary)),
+                  ),
+                  for (final item in TaskFilter.values)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Semantics(
+                        button: true,
+                        container: true,
+                        selected: filter == item,
+                        child: AFBaseButton(
+                          key: ValueKey('nav-${item.name}'),
+                          onTap: () => onSelect(item),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 12),
+                          borderRadius: theme.borderRadius.m,
+                          borderColor: (_, __, ___, ____) => Colors.transparent,
+                          backgroundColor: (_, hover, __) => filter == item
+                              ? theme.fillColorScheme.themeSelect
+                              : hover
+                                  ? theme.fillColorScheme.contentHover
+                                  : Colors.transparent,
+                          builder: (context, _, __) => Row(children: [
+                            WorkspaceIcon(item.icon,
+                                color: filter == item
+                                    ? theme.textColorScheme.action
+                                    : null),
+                            const SizedBox(width: 10),
+                            Expanded(
+                                child: Text(item.label,
+                                    style: theme.textStyle.body.standard(
+                                        color: filter == item
+                                            ? theme.textColorScheme.action
+                                            : theme.textColorScheme.primary))),
+                            Text(
+                                '${switch (item) {
+                                  TaskFilter.all => state.tasks.length,
+                                  TaskFilter.pending =>
+                                    state.tasks.length - state.completedCount,
+                                  TaskFilter.completed => state.completedCount,
+                                }}',
+                                style: theme.textStyle.caption.standard(
+                                    color: theme.textColorScheme.secondary)),
+                          ]),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  Semantics(
+                    button: true,
+                    container: true,
+                    child: AFGhostButton.normal(
+                      onTap: onCreate,
+                      padding: const EdgeInsets.all(12),
+                      builder: (context, _, __) => Row(children: [
+                        Icon(Icons.add,
+                            size: 20, color: theme.iconColorScheme.secondary),
+                        const SizedBox(width: 10),
+                        Expanded(
+                            child: Text('Añadir una tarea',
+                                style: theme.textStyle.body.standard(
+                                    color: theme.textColorScheme.secondary))),
+                      ]),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                  'Tu espacio, a tu manera.\nDemo local · Sin sincronización',
+                  style: theme.textStyle.caption
+                      .standard(color: theme.textColorScheme.secondary)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class WorkspaceTaskRow extends StatelessWidget {
+  const WorkspaceTaskRow(
+      {super.key, required this.task, required this.onToggle});
+
+  final WorkspaceTask task;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = AppFlowyTheme.of(context);
+    return Semantics(
+      label: task.title,
+      checked: task.completed,
+      onTap: onToggle,
+      excludeSemantics: true,
+      child: AFBaseButton(
+        onTap: onToggle,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        borderRadius: theme.borderRadius.m,
+        borderColor: (_, __, ___, ____) => Colors.transparent,
+        backgroundColor: (_, hover, __) =>
+            hover ? theme.fillColorScheme.contentHover : Colors.transparent,
+        builder: (context, _, __) => Row(children: [
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: task.completed
+                  ? theme.fillColorScheme.themeThick
+                  : Colors.transparent,
+              border: Border.all(
+                  color: task.completed
+                      ? theme.fillColorScheme.themeThick
+                      : theme.iconColorScheme.tertiary),
+              borderRadius: BorderRadius.circular(theme.borderRadius.xs),
+            ),
+            child: task.completed
+                ? WorkspaceIcon('toolbar_check',
+                    size: 16, color: theme.textColorScheme.onFill)
+                : null,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+              child: Text(task.title,
+                  style: theme.textStyle.body
+                      .standard(
+                          color: task.completed
+                              ? theme.textColorScheme.secondary
+                              : theme.textColorScheme.primary)
+                      .copyWith(
+                          decoration: task.completed
+                              ? TextDecoration.lineThrough
+                              : null))),
+        ]),
+      ),
+    );
+  }
+}
