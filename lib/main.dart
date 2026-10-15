@@ -1,74 +1,46 @@
-import 'package:appflowy_ui/appflowy_ui.dart';
+// App de Forex: noticias fuertes de Forex Factory con filtros, auto-refresco
+// y notificaciones. Punto de entrada.
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'design_system/theme.dart';
-import 'auth/application/auth_cubit.dart';
-import 'settings/application/settings_cubit.dart';
-import 'workspace/presentation/workspace_page.dart';
+import 'forex/forex_page.dart';
 
-void main() => runApp(const WorkspaceApp());
+void main() => runApp(const ForexApp());
 
-class WorkspaceApp extends StatelessWidget {
-  const WorkspaceApp({super.key, this.authRepository});
-  final AuthRepository? authRepository;
+class ForexApp extends StatefulWidget {
+  const ForexApp({super.key});
 
   @override
-  Widget build(BuildContext context) => MultiBlocProvider(
-        providers: [
-          BlocProvider(create: (_) => SettingsCubit()),
-          BlocProvider(
-              create: (_) => AuthCubit(authRepository ?? DemoAuthRepository())),
-        ],
-        child: BlocBuilder<SettingsCubit, SettingsState>(
-          builder: (context, settings) => MaterialApp(
-            title: 'Mi espacio',
-            debugShowCheckedModeBanner: false,
-            theme: workspaceTheme(Brightness.light),
-            darkTheme: workspaceTheme(Brightness.dark),
-            themeMode: settings.themeMode,
-            builder: (context, child) {
-              final builder = AppFlowyDefaultTheme();
-              final media = MediaQuery.of(context);
-              return AppFlowyTheme(
-                data: Theme.of(context).brightness == Brightness.dark
-                    ? builder.dark()
-                    : builder.light(),
-                child: MediaQuery(
-                  // Conserva la ampliación accesible del sistema operativo.
-                  data: media.copyWith(
-                    textScaler:
-                        _ScaledTextScaler(media.textScaler, settings.textScale),
-                  ),
-                  child: child!,
-                ),
-              );
-            },
-            home: WorkspacePage(
-              onToggleTheme: () {
-                final isDark = settings.themeMode == ThemeMode.dark ||
-                    (settings.themeMode == ThemeMode.system &&
-                        WidgetsBinding.instance.platformDispatcher
-                                .platformBrightness ==
-                            Brightness.dark);
-                context
-                    .read<SettingsCubit>()
-                    .setTheme(isDark ? ThemeMode.light : ThemeMode.dark);
-              },
-            ),
-          ),
-        ),
-      );
+  State<ForexApp> createState() => _ForexAppState();
 }
 
-class _ScaledTextScaler extends TextScaler {
-  const _ScaledTextScaler(this.system, this.factor);
-  final TextScaler system;
-  final double factor;
+class _ForexAppState extends State<ForexApp> {
+  ThemeMode _mode = ThemeMode.system;
+
+  void _toggleTheme() {
+    final isDark = _mode == ThemeMode.dark ||
+        (_mode == ThemeMode.system &&
+            WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+                Brightness.dark);
+    setState(() => _mode = isDark ? ThemeMode.light : ThemeMode.dark);
+  }
 
   @override
-  double scale(double fontSize) => system.scale(fontSize) * factor;
-
-  @override
-  double get textScaleFactor => scale(14) / 14;
+  Widget build(BuildContext context) {
+    const seed = Color(0xFF1565C0);
+    return MaterialApp(
+      title: 'Forex Noticias',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: seed),
+      ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorScheme:
+            ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark),
+      ),
+      themeMode: _mode,
+      home: ForexHomePage(onToggleTheme: _toggleTheme),
+    );
+  }
 }

@@ -1,19 +1,21 @@
-// Pantalla de noticias rojas de Forex Factory (fase 1).
-// Lista la programación del día/semana desde el feed y programa pre-avisos.
+// Pantalla principal de la app Forex: noticias fuertes con filtros
+// (impacto, divisa, hoy/semana) y auto-refresco en tiempo real.
 import 'package:flutter/material.dart';
 
 import 'ff_models.dart';
 import 'ff_notifications.dart';
 import 'forex_controller.dart';
 
-class ForexPage extends StatefulWidget {
-  const ForexPage({super.key});
+class ForexHomePage extends StatefulWidget {
+  const ForexHomePage({super.key, required this.onToggleTheme});
+
+  final VoidCallback onToggleTheme;
 
   @override
-  State<ForexPage> createState() => _ForexPageState();
+  State<ForexHomePage> createState() => _ForexHomePageState();
 }
 
-class _ForexPageState extends State<ForexPage> {
+class _ForexHomePageState extends State<ForexHomePage> {
   final _controller = ForexController();
 
   @override
@@ -21,10 +23,12 @@ class _ForexPageState extends State<ForexPage> {
     super.initState();
     FfNotifications.instance.init();
     _controller.addListener(_onChange);
-    _controller.load();
+    _controller.start();
   }
 
-  void _onChange() => setState(() {});
+  void _onChange() {
+    if (mounted) setState(() {});
+  }
 
   @override
   void dispose() {
@@ -39,8 +43,13 @@ class _ForexPageState extends State<ForexPage> {
     final c = _controller;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Noticias rojas · Forex Factory'),
+        title: const Text('Forex · Noticias fuertes'),
         actions: [
+          IconButton(
+            tooltip: c.autoRefresh ? 'Auto-refresco: ON' : 'Auto-refresco: OFF',
+            icon: Icon(c.autoRefresh ? Icons.sync : Icons.sync_disabled),
+            onPressed: () => c.setAutoRefresh(!c.autoRefresh),
+          ),
           IconButton(
             tooltip: 'Probar notificación',
             icon: const Icon(Icons.notifications_active_outlined),
@@ -48,30 +57,99 @@ class _ForexPageState extends State<ForexPage> {
               id: 1,
               title: '🔴 Prueba de alerta',
               body: 'Las notificaciones funcionan. Verás un aviso ~5 min '
-                  'antes de cada noticia de alto impacto.',
+                  'antes de cada noticia fuerte.',
             ),
+          ),
+          IconButton(
+            tooltip: 'Cambiar tema',
+            icon: const Icon(Icons.contrast),
+            onPressed: widget.onToggleTheme,
           ),
           IconButton(
             tooltip: 'Recargar',
             icon: const Icon(Icons.refresh),
-            onPressed: c.loading ? null : c.load,
+            onPressed: c.loading ? null : () => c.load(),
           ),
         ],
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: SegmentedButton<ForexScope>(
-              segments: const [
-                ButtonSegment(value: ForexScope.today, label: Text('Hoy')),
-                ButtonSegment(value: ForexScope.week, label: Text('Semana')),
-              ],
-              selected: {c.scope},
-              onSelectionChanged: (s) => c.setScope(s.first),
-            ),
-          ),
+          _filterBar(context, cs),
+          const Divider(height: 1),
           Expanded(child: _body(context, cs)),
+        ],
+      ),
+    );
+  }
+
+  Widget _filterBar(BuildContext context, ColorScheme cs) {
+    final c = _controller;
+    const impactLabels = {'high': 'Alto', 'medium': 'Medio', 'low': 'Bajo'};
+    const impactColors = {
+      'high': Colors.red,
+      'medium': Colors.orange,
+      'low': Colors.amber
+    };
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              SegmentedButton<ForexScope>(
+                style: const ButtonStyle(
+                    visualDensity: VisualDensity.compact),
+                segments: const [
+                  ButtonSegment(value: ForexScope.today, label: Text('Hoy')),
+                  ButtonSegment(value: ForexScope.week, label: Text('Semana')),
+                ],
+                selected: {c.scope},
+                onSelectionChanged: (s) => c.setScope(s.first),
+              ),
+              const Spacer(),
+              if (c.lastUpdated != null)
+                Text(
+                  'Actualizado ${_hhmm(c.lastUpdated!)}',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Filtro de impacto
+          Wrap(
+            spacing: 6,
+            children: [
+              for (final e in impactLabels.entries)
+                FilterChip(
+                  label: Text(e.value),
+                  selected: c.impacts.contains(e.key),
+                  avatar: CircleAvatar(
+                      backgroundColor: impactColors[e.key], radius: 6),
+                  onSelected: (_) => c.toggleImpact(e.key),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          // Filtro de divisa (dinámico)
+          if (c.availableCurrencies.isNotEmpty)
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                ChoiceChip(
+                  label: const Text('Todas'),
+                  selected: c.currencies.isEmpty,
+                  onSelected: (_) => c.clearCurrencies(),
+                ),
+                for (final cur in c.availableCurrencies)
+                  FilterChip(
+                    label: Text(cur),
+                    selected: c.currencies.contains(cur),
+                    onSelected: (_) => c.toggleCurrency(cur),
+                  ),
+              ],
+            ),
         ],
       ),
     );
@@ -79,10 +157,10 @@ class _ForexPageState extends State<ForexPage> {
 
   Widget _body(BuildContext context, ColorScheme cs) {
     final c = _controller;
-    if (c.loading && c.events.isEmpty) {
+    if (c.loading && c.events.isEmpty && c.lastUpdated == null) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (c.error != null) {
+    if (c.error != null && c.events.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -93,7 +171,8 @@ class _ForexPageState extends State<ForexPage> {
               const SizedBox(height: 12),
               Text(c.error!, textAlign: TextAlign.center),
               const SizedBox(height: 12),
-              FilledButton(onPressed: c.load, child: const Text('Reintentar')),
+              FilledButton(
+                  onPressed: () => c.load(), child: const Text('Reintentar')),
             ],
           ),
         ),
@@ -103,25 +182,35 @@ class _ForexPageState extends State<ForexPage> {
     if (events.isEmpty) {
       return Center(
         child: Text(c.scope == ForexScope.today
-            ? 'No hay noticias rojas hoy.'
-            : 'No hay noticias rojas esta semana.'),
+            ? 'No hay noticias con estos filtros hoy.'
+            : 'No hay noticias con estos filtros esta semana.'),
       );
     }
     return RefreshIndicator(
-      onRefresh: c.load,
+      onRefresh: () => c.load(),
       child: ListView.separated(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         itemCount: events.length,
         separatorBuilder: (_, __) => const SizedBox(height: 8),
         itemBuilder: (_, i) => _EventTile(event: events[i]),
       ),
     );
   }
+
+  static String _hhmm(DateTime t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 }
 
 class _EventTile extends StatelessWidget {
   const _EventTile({required this.event});
   final FfEvent event;
+
+  static const _impactColor = {
+    'high': Colors.red,
+    'medium': Colors.orange,
+    'low': Colors.amber,
+    'holiday': Colors.grey,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -130,6 +219,7 @@ class _EventTile extends StatelessWidget {
     final hhmm =
         '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
     final past = t.isBefore(DateTime.now());
+    final color = _impactColor[event.impact] ?? Colors.red;
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -138,11 +228,9 @@ class _EventTile extends StatelessWidget {
           children: [
             Container(
               width: 4,
-              height: 40,
+              height: 42,
               decoration: BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.circular(2),
-              ),
+                  color: color, borderRadius: BorderRadius.circular(2)),
             ),
             const SizedBox(width: 12),
             Column(
@@ -183,8 +271,7 @@ class _EventTile extends StatelessWidget {
                 ],
               ),
             ),
-            if (past)
-              Icon(Icons.check_circle, size: 18, color: cs.outline),
+            if (past) Icon(Icons.check_circle, size: 18, color: cs.outline),
           ],
         ),
       ),
