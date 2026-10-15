@@ -105,15 +105,37 @@ class CalendarView extends StatelessWidget {
             : 'No hay noticias con estos filtros esta semana.'),
       );
     }
+    final rows = _groupByDay(events);
     return RefreshIndicator(
       onRefresh: () => c.load(),
-      child: ListView.separated(
-        padding: const EdgeInsets.all(12),
-        itemCount: events.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
-        itemBuilder: (_, i) => EventTile(event: events[i]),
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 16),
+        itemCount: rows.length,
+        itemBuilder: (_, i) {
+          final row = rows[i];
+          if (row is DateTime) return _DayHeader(day: row);
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: EventTile(event: row as FfEvent),
+          );
+        },
       ),
     );
+  }
+
+  /// Mezcla cabeceras de día (DateTime) con los eventos (FfEvent).
+  static List<Object> _groupByDay(List<FfEvent> events) {
+    final rows = <Object>[];
+    DateTime? last;
+    for (final e in events) {
+      final day = DateTime(e.time.year, e.time.month, e.time.day);
+      if (last == null || day != last) {
+        rows.add(day);
+        last = day;
+      }
+      rows.add(e);
+    }
+    return rows;
   }
 
   static String _hhmm(DateTime t) =>
@@ -140,6 +162,46 @@ class _ErrorBox extends StatelessWidget {
             FilledButton(onPressed: onRetry, child: const Text('Reintentar')),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _DayHeader extends StatelessWidget {
+  const _DayHeader({required this.day});
+  final DateTime day;
+
+  static const _days = [
+    'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'
+  ];
+  static const _months = [
+    'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+    'jul', 'ago', 'sep', 'oct', 'nov', 'dic'
+  ];
+
+  String _label() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final diff = day.difference(today).inDays;
+    final base = '${_days[day.weekday - 1]} ${day.day} ${_months[day.month - 1]}';
+    if (diff == 0) return 'Hoy · $base';
+    if (diff == 1) return 'Mañana · $base';
+    return base;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(2, 12, 2, 8),
+      child: Row(
+        children: [
+          Text(_label(),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: cs.primary, fontWeight: FontWeight.bold)),
+          const SizedBox(width: 10),
+          Expanded(child: Divider(color: cs.outlineVariant, height: 1)),
+        ],
       ),
     );
   }
