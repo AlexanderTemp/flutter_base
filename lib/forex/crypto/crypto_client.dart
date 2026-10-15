@@ -28,6 +28,22 @@ class CryptoPrice {
         RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},');
     return parts.join('.');
   }
+
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'symbol': symbol,
+        'usd': usd,
+        'change24h': change24h,
+        'decimals': decimals,
+      };
+
+  factory CryptoPrice.fromMap(Map<String, dynamic> m) => CryptoPrice(
+        id: m['id'] as String,
+        symbol: m['symbol'] as String,
+        usd: (m['usd'] as num).toDouble(),
+        change24h: (m['change24h'] as num).toDouble(),
+        decimals: (m['decimals'] as num).toInt(),
+      );
 }
 
 class CryptoClient {
@@ -38,32 +54,57 @@ class CryptoClient {
       'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 '
       '(KHTML, like Gecko) Chrome/120.0 Safari/537.36';
 
+  // Caché en memoria: evita martillear CoinGecko (429) y sirve lo último
+  // cuando falla. Compartida por todos los que pidan precios en el proceso.
+  static String? _key;
+  static DateTime? _at;
+  static List<CryptoPrice>? _last;
+  static const _dedupe = Duration(seconds: 45);
+
   Future<List<CryptoPrice>> fetch(List<String> ids) async {
     if (ids.isEmpty) return [];
-    final url = 'https://api.coingecko.com/api/v3/simple/price'
-        '?ids=${ids.join(",")}&vs_currencies=usd&include_24hr_change=true';
-    final r = await _http.get(Uri.parse(url),
-        headers: {'User-Agent': _ua, 'Accept': 'application/json'}).timeout(
-        const Duration(seconds: 15));
-    if (r.statusCode != 200) {
-      throw Exception('CoinGecko no disponible (${r.statusCode}).');
+    final key = ids.join(',');
+    final now = DateTime.now();
+
+    // Si pedimos lo mismo hace nada, devolvemos la caché (no llamamos a la API).
+    if (_last != null && _key == key && now.difference(_at!) < _dedupe) {
+      return _last!;
     }
-    final map = jsonDecode(r.body) as Map<String, dynamic>;
-    final out = <CryptoPrice>[];
-    for (final id in ids) {
-      final d = map[id];
-      if (d is Map) {
-        final coin = coinById(id);
-        out.add(CryptoPrice(
-          id: id,
-          symbol: coin?.symbol ?? id.toUpperCase(),
-          decimals: coin?.decimals ?? 2,
-          usd: (d['usd'] as num?)?.toDouble() ?? 0,
-          change24h: (d['usd_24h_change'] as num?)?.toDouble() ?? 0,
-        ));
+
+    try {
+      final url = 'https://api.coingecko.com/api/v3/simple/price'
+          '?ids=$key&vs_currencies=usd&include_24hr_change=true';
+      final r = await _http.get(Uri.parse(url),
+          headers: {'User-Agent': _ua, 'Accept': 'application/json'}).timeout(
+          const Duration(seconds: 15));
+      if (r.statusCode != 200) {
+        // 429 u otro: devolvemos lo último conocido en vez de romper.
+        if (_last != null && _key == key) return _last!;
+        throw Exception('CoinGecko no disponible (${r.statusCode}).');
       }
+      final map = jsonDecode(r.body) as Map<String, dynamic>;
+      final out = <CryptoPrice>[];
+      for (final id in ids) {
+        final d = map[id];
+        if (d is Map) {
+          final coin = coinById(id);
+          out.add(CryptoPrice(
+            id: id,
+            symbol: coin?.symbol ?? id.toUpperCase(),
+            decimals: coin?.decimals ?? 2,
+            usd: (d['usd'] as num?)?.toDouble() ?? 0,
+            change24h: (d['usd_24h_change'] as num?)?.toDouble() ?? 0,
+          ));
+        }
+      }
+      _last = out;
+      _key = key;
+      _at = now;
+      return out;
+    } catch (e) {
+      if (_last != null && _key == key) return _last!;
+      rethrow;
     }
-    return out;
   }
 
   void close() => _http.close();

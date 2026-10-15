@@ -28,4 +28,17 @@ class Prefs {
     final sp = await SharedPreferences.getInstance();
     await sp.setBool(_kLive, on);
   }
+
+  // Caché de precios cripto (para mostrar lo último al abrir / tras un 429).
+  static const _kCryptoCache = 'crypto_cache';
+
+  static Future<String?> cryptoCache() async {
+    final sp = await SharedPreferences.getInstance();
+    return sp.getString(_kCryptoCache);
+  }
+
+  static Future<void> setCryptoCache(String json) async {
+    final sp = await SharedPreferences.getInstance();
+    await sp.setString(_kCryptoCache, json);
+  }
 }

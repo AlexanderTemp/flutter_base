@@ -15,21 +15,24 @@ class BobClient {
   static const _url =
       'https://www.bcb.gob.bo/bcb_tco_publico_ultima_cotizacion.php';
 
+  static BobRate? _last; // sirve lo último si falla (cambia 1 vez/día)
+
   Future<BobRate?> fetch() async {
     try {
       final r = await _http.get(Uri.parse(_url),
           headers: {'User-Agent': 'forex-app'}).timeout(
           const Duration(seconds: 12));
-      if (r.statusCode != 200) return null;
+      if (r.statusCode != 200) return _last;
       final v = RegExp(r'tco-public-value">Bs ([\d,]+)/\$us').firstMatch(r.body);
-      if (v == null) return null;
+      if (v == null) return _last;
       final vig = RegExp(r'VIGENCIA:\s*([^<]+)').firstMatch(r.body);
-      return BobRate(
+      _last = BobRate(
         value: v.group(1)!,
         vigencia: vig?.group(1)?.trim() ?? '',
       );
+      return _last;
     } catch (_) {
-      return null;
+      return _last;
     }
   }
 

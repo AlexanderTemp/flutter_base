@@ -136,7 +136,7 @@ class LiveNotifier {
         playSound: false,
       ),
       foregroundTaskOptions: ForegroundTaskOptions(
-        eventAction: ForegroundTaskEventAction.repeat(60000), // cada 60 s
+        eventAction: ForegroundTaskEventAction.repeat(120000), // cada 120 s
         autoRunOnBoot: true,
         autoRunOnMyPackageReplaced: true,
         allowWakeLock: true,
