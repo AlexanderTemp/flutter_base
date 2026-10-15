@@ -42,16 +42,18 @@ class FfNotifications {
         id,
         title,
         body,
-        const NotificationDetails(
+        NotificationDetails(
           android: AndroidNotificationDetails(
             'ff_alerts', 'Alertas Forex Factory',
             channelDescription: 'Noticias de alto impacto',
             importance: Importance.max,
             priority: Priority.high,
+            styleInformation: BigTextStyleInformation(body),
           ),
-          iOS: DarwinNotificationDetails(),
-          macOS: DarwinNotificationDetails(),
-          linux: LinuxNotificationDetails(urgency: LinuxNotificationUrgency.critical),
+          iOS: const DarwinNotificationDetails(),
+          macOS: const DarwinNotificationDetails(),
+          linux: const LinuxNotificationDetails(
+              urgency: LinuxNotificationUrgency.critical),
         ),
       );
     } catch (e) {

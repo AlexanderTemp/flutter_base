@@ -1,8 +1,10 @@
-// Estado de precios cripto (para la pestaña de Análisis).
+// Estado de precios cripto (para la barra y la pestaña de Análisis). Usa las
+// monedas seleccionadas en Settings.
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../data/prefs.dart';
 import 'crypto_client.dart';
 
 class CryptoController extends ChangeNotifier {
@@ -14,15 +16,22 @@ class CryptoController extends ChangeNotifier {
   bool loading = false;
   String? error;
   List<CryptoPrice> prices = [];
+  List<String> _ids = [];
   Timer? _timer;
 
+  Future<void> reloadSelection() async {
+    _ids = await Prefs.coins();
+    await load();
+  }
+
   Future<void> load({bool silent = false}) async {
+    if (_ids.isEmpty) _ids = await Prefs.coins();
     if (!silent) {
       loading = true;
       notifyListeners();
     }
     try {
-      prices = await _client.fetch();
+      prices = await _client.fetch(_ids);
       error = null;
     } catch (e) {
       error = e.toString();
@@ -33,7 +42,7 @@ class CryptoController extends ChangeNotifier {
   }
 
   void start() {
-    load();
+    reloadSelection();
     _timer = Timer.periodic(refreshEvery, (_) => load(silent: true));
   }
 

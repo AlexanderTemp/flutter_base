@@ -3,19 +3,30 @@
 import 'package:appflowy_ui/appflowy_ui.dart';
 import 'package:flutter/material.dart';
 
+import 'bob/bob_controller.dart';
+import 'crypto/crypto_controller.dart';
 import 'ff_models.dart';
 import 'forex_controller.dart';
 import 'ui.dart';
+import 'widgets/price_bar.dart';
 
 class CalendarView extends StatelessWidget {
-  const CalendarView({super.key, required this.controller});
+  const CalendarView({
+    super.key,
+    required this.controller,
+    required this.crypto,
+    required this.bob,
+  });
   final ForexController controller;
+  final CryptoController crypto;
+  final BobController bob;
 
   @override
   Widget build(BuildContext context) {
     final t = AppFlowyTheme.of(context);
     return Column(
       children: [
+        PriceBar(crypto: crypto, bob: bob),
         _filterBar(context, t),
         Divider(height: 1, color: t.borderColorScheme.primary),
         Expanded(child: _body(context, t)),
@@ -250,7 +261,10 @@ class EventTile extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    AfPill(text: event.currency),
+                    AfPill(
+                        text: event.currency,
+                        bg: color.withValues(alpha: 0.18),
+                        fg: color),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(event.name,
