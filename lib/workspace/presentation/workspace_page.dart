@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../design_system/workspace_icon.dart';
+import '../../settings/application/settings_cubit.dart';
+import '../../settings/presentation/settings_page.dart';
 import '../application/workspace_cubit.dart';
 import 'new_task_dialog.dart';
 import 'workspace_widgets.dart';
@@ -29,20 +31,52 @@ class _WorkspaceView extends StatefulWidget {
 
 class _WorkspaceViewState extends State<_WorkspaceView> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+  final _searchController = TextEditingController();
+  final _searchFocus = FocusNode();
+  WorkspaceDestination _destination = WorkspaceDestination.tasks;
   TaskFilter _filter = TaskFilter.all;
   String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocus.dispose();
+    super.dispose();
+  }
+
+  void _navigate(WorkspaceDestination destination) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _destination = destination;
+      if (destination == WorkspaceDestination.search) _filter = TaskFilter.all;
+    });
+    if (destination == WorkspaceDestination.search) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _searchFocus.requestFocus();
+      });
+    }
+  }
 
   Future<void> _addTask() async {
     final title = await showDialog<String>(
       context: context,
       builder: (_) => const NewTaskDialog(),
     );
-    if (mounted && title != null) context.read<WorkspaceCubit>().addTask(title);
+    if (mounted && title != null) {
+      context.read<WorkspaceCubit>().addTask(title);
+      _searchController.clear();
+      setState(() {
+        _destination = WorkspaceDestination.tasks;
+        _filter = TaskFilter.all;
+        _query = '';
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = AppFlowyTheme.of(context);
+    final settings = context.watch<SettingsCubit>().state;
     return LayoutBuilder(builder: (context, constraints) {
       final wide = constraints.maxWidth >= 900;
       return BlocBuilder<WorkspaceCubit, WorkspaceState>(
@@ -51,8 +85,17 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
               key: const ValueKey('workspace-sidebar'),
               filter: _filter,
               state: state,
+              workspaceName: settings.workspaceName,
+              destination: _destination,
+              onNavigate: (destination) {
+                if (!wide) Navigator.of(context).pop();
+                _navigate(destination);
+              },
               onSelect: (filter) {
-                setState(() => _filter = filter);
+                setState(() {
+                  _filter = filter;
+                  _destination = WorkspaceDestination.tasks;
+                });
                 if (!wide) Navigator.of(context).pop();
               },
               onCreate: () {
@@ -68,6 +111,13 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
                   width: 280,
                   shape: const RoundedRectangleBorder(),
                   child: sidebar()),
+          bottomNavigationBar: wide
+              ? null
+              : WorkspaceBottomNavigation(
+                  destination: _destination,
+                  onNavigate: _navigate,
+                  onCreate: _addTask,
+                ),
           body: SafeArea(
             child: Row(children: [
               if (wide) ...[
@@ -93,7 +143,8 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
                     const WorkspaceIcon('type_page', size: 18),
                     const SizedBox(width: 8),
                     Expanded(
-                        child: Text('Mi espacio / Mis tareas',
+                        child: Text(
+                            '${settings.workspaceName} / ${_destination.label}',
                             overflow: TextOverflow.ellipsis,
                             style: theme.textStyle.caption.standard(
                                 color: theme.textColorScheme.secondary))),
@@ -103,7 +154,18 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
                         onTap: widget.onToggleTheme),
                   ]),
                 ),
-                Expanded(child: _content(context, state, wide)),
+                Expanded(
+                  child: IndexedStack(
+                    index:
+                        _destination == WorkspaceDestination.settings ? 1 : 0,
+                    children: [
+                      _content(context, state, wide, settings),
+                      SettingsPage(
+                          active:
+                              _destination == WorkspaceDestination.settings),
+                    ],
+                  ),
+                ),
               ])),
             ]),
           ),
@@ -112,7 +174,8 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
     });
   }
 
-  Widget _content(BuildContext context, WorkspaceState state, bool wide) {
+  Widget _content(BuildContext context, WorkspaceState state, bool wide,
+      SettingsState settings) {
     final theme = AppFlowyTheme.of(context);
     final tasks = state.tasks.where((task) {
       final matchesFilter = switch (_filter) {
@@ -120,7 +183,12 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
         TaskFilter.pending => !task.completed,
         TaskFilter.completed => task.completed,
       };
-      return matchesFilter && task.title.toLowerCase().contains(_query);
+      final visible = settings.showCompleted ||
+          !task.completed ||
+          _filter == TaskFilter.completed;
+      return matchesFilter &&
+          visible &&
+          task.title.toLowerCase().contains(_query);
     }).toList();
 
     return Align(
@@ -143,7 +211,10 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
               ),
             ),
             const SizedBox(height: 24),
-            Text('Mis tareas',
+            Text(
+                _destination == WorkspaceDestination.search
+                    ? 'Buscar'
+                    : 'Mis tareas',
                 style: theme.textStyle.heading1
                     .enhanced(color: theme.textColorScheme.primary)),
             const SizedBox(height: 12),
@@ -189,6 +260,8 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
                 label: 'Buscar tareas',
                 child: AFTextField(
                   key: const ValueKey('search-tasks'),
+                  controller: _searchController,
+                  focusNode: _searchFocus,
                   hintText: 'Buscar en esta página…',
                   size: AFTextFieldSize.m,
                   onChanged: (value) =>
@@ -224,6 +297,7 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
                     WorkspaceTaskRow(
                       key: ValueKey('task-${task.id}'),
                       task: task,
+                      compact: settings.compact,
                       onToggle: () =>
                           context.read<WorkspaceCubit>().toggleTask(task.id),
                     ),

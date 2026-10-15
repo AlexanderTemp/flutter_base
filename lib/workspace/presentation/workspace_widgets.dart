@@ -2,6 +2,7 @@ import 'package:appflowy_ui/appflowy_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../../design_system/workspace_icon.dart';
+import '../../design_system/workspace_controls.dart';
 import '../application/workspace_cubit.dart';
 
 enum TaskFilter {
@@ -12,6 +13,71 @@ enum TaskFilter {
   const TaskFilter(this.label, this.icon);
   final String label;
   final String icon;
+}
+
+enum WorkspaceDestination {
+  tasks('Tareas', Icons.home_outlined),
+  search('Buscar', Icons.search),
+  settings('Ajustes', Icons.settings_outlined);
+
+  const WorkspaceDestination(this.label, this.icon);
+  final String label;
+  final IconData icon;
+}
+
+class WorkspaceBottomNavigation extends StatelessWidget {
+  const WorkspaceBottomNavigation({
+    super.key,
+    required this.destination,
+    required this.onNavigate,
+    required this.onCreate,
+  });
+
+  final WorkspaceDestination destination;
+  final ValueChanged<WorkspaceDestination> onNavigate;
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = AppFlowyTheme.of(context);
+    Widget item(WorkspaceDestination value) => Expanded(
+          child: WorkspaceChoice(
+            key: ValueKey('bottom-${value.name}'),
+            label: value.label,
+            icon: value.icon,
+            selected: destination == value,
+            vertical: true,
+            onTap: () => onNavigate(value),
+          ),
+        );
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.surfaceContainerColorScheme.layer01,
+        border: Border(top: BorderSide(color: theme.borderColorScheme.primary)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            item(WorkspaceDestination.tasks),
+            item(WorkspaceDestination.search),
+            Expanded(
+              child: WorkspaceChoice(
+                key: const ValueKey('bottom-create'),
+                label: 'Crear',
+                icon: Icons.add_circle_outline,
+                selected: false,
+                vertical: true,
+                onTap: onCreate,
+              ),
+            ),
+            item(WorkspaceDestination.settings),
+          ]),
+        ),
+      ),
+    );
+  }
 }
 
 class WorkspaceIconButton extends StatelessWidget {
@@ -50,12 +116,18 @@ class WorkspaceSidebar extends StatelessWidget {
       required this.filter,
       required this.state,
       required this.onSelect,
-      required this.onCreate});
+      required this.onCreate,
+      required this.workspaceName,
+      required this.destination,
+      required this.onNavigate});
 
   final TaskFilter filter;
   final WorkspaceState state;
   final ValueChanged<TaskFilter> onSelect;
   final VoidCallback onCreate;
+  final String workspaceName;
+  final WorkspaceDestination destination;
+  final ValueChanged<WorkspaceDestination> onNavigate;
 
   @override
   Widget build(BuildContext context) {
@@ -77,13 +149,15 @@ class WorkspaceSidebar extends StatelessWidget {
                     color: theme.fillColorScheme.themeThick,
                     borderRadius: BorderRadius.circular(theme.borderRadius.m),
                   ),
-                  child: Text('M',
+                  child: Text(workspaceName.characters.first.toUpperCase(),
                       style: theme.textStyle.body
                           .enhanced(color: theme.textColorScheme.onFill)),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                    child: Text('Mi espacio',
+                    child: Text(workspaceName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: theme.textStyle.body
                             .enhanced(color: theme.textColorScheme.primary))),
               ]),
@@ -92,6 +166,17 @@ class WorkspaceSidebar extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 children: [
+                  for (final destination in WorkspaceDestination.values)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: WorkspaceChoice(
+                        key: ValueKey('sidebar-${destination.name}'),
+                        label: destination.label,
+                        icon: destination.icon,
+                        selected: this.destination == destination,
+                        onTap: () => onNavigate(destination),
+                      ),
+                    ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 24, 12, 12),
                     child: Text('ESPACIO PRIVADO',
@@ -104,7 +189,8 @@ class WorkspaceSidebar extends StatelessWidget {
                       child: Semantics(
                         button: true,
                         container: true,
-                        selected: filter == item,
+                        selected: destination == WorkspaceDestination.tasks &&
+                            filter == item,
                         child: AFBaseButton(
                           key: ValueKey('nav-${item.name}'),
                           onTap: () => onSelect(item),
@@ -112,21 +198,28 @@ class WorkspaceSidebar extends StatelessWidget {
                               horizontal: 12, vertical: 12),
                           borderRadius: theme.borderRadius.m,
                           borderColor: (_, __, ___, ____) => Colors.transparent,
-                          backgroundColor: (_, hover, __) => filter == item
-                              ? theme.fillColorScheme.themeSelect
-                              : hover
-                                  ? theme.fillColorScheme.contentHover
-                                  : Colors.transparent,
+                          backgroundColor: (_, hover, __) =>
+                              destination == WorkspaceDestination.tasks &&
+                                      filter == item
+                                  ? theme.fillColorScheme.themeSelect
+                                  : hover
+                                      ? theme.fillColorScheme.contentHover
+                                      : Colors.transparent,
                           builder: (context, _, __) => Row(children: [
                             WorkspaceIcon(item.icon,
-                                color: filter == item
-                                    ? theme.textColorScheme.action
-                                    : null),
+                                color:
+                                    destination == WorkspaceDestination.tasks &&
+                                            filter == item
+                                        ? theme.textColorScheme.action
+                                        : null),
                             const SizedBox(width: 10),
                             Expanded(
                                 child: Text(item.label,
                                     style: theme.textStyle.body.standard(
-                                        color: filter == item
+                                        color: destination ==
+                                                    WorkspaceDestination
+                                                        .tasks &&
+                                                filter == item
                                             ? theme.textColorScheme.action
                                             : theme.textColorScheme.primary))),
                             Text(
@@ -179,10 +272,14 @@ class WorkspaceSidebar extends StatelessWidget {
 
 class WorkspaceTaskRow extends StatelessWidget {
   const WorkspaceTaskRow(
-      {super.key, required this.task, required this.onToggle});
+      {super.key,
+      required this.task,
+      required this.onToggle,
+      this.compact = false});
 
   final WorkspaceTask task;
   final VoidCallback onToggle;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -194,7 +291,8 @@ class WorkspaceTaskRow extends StatelessWidget {
       excludeSemantics: true,
       child: AFBaseButton(
         onTap: onToggle,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding:
+            EdgeInsets.symmetric(horizontal: 16, vertical: compact ? 12 : 16),
         borderRadius: theme.borderRadius.m,
         borderColor: (_, __, ___, ____) => Colors.transparent,
         backgroundColor: (_, hover, __) =>

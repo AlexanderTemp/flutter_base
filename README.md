@@ -2,6 +2,28 @@
 
 Esta base reutiliza **el sistema visual real de AppFlowy**: el paquete `appflowy_ui`, sus temas claro/oscuro, tokens de color, tipografía, radios, botones, campos y modales. También incluye cuatro iconos SVG del proyecto original. La pantalla adapta esa base a un espacio de tareas con barra lateral, cabecera discreta, superficie plana y filas compactas.
 
+## Fase 2: navegación y ajustes propios
+
+### Vista completa de ajustes, perfil y acceso demo
+
+La vista móvil ahora abre un **índice con tarjeta de perfil, avatar y grupos de opciones**, con pantallas de detalle y regreso. En escritorio presenta el perfil y las categorías en un menú lateral. Puedes editar nombre, descripción y color del avatar.
+
+El inicio de sesión tiene formulario, validación, carga, errores, reintento y cierre de sesión mediante `AuthCubit` y el contrato `AuthRepository`. La implementación `DemoAuthRepository` simula una sesión; la pantalla lo indica y pide datos ficticios. Para conectar un backend se sustituye el repositorio, sin reescribir las vistas. **No verifica credenciales ni protege datos reales.**
+
+![Vista completa de ajustes móvil](docs/settings-overview-mobile.png)
+
+[Perfil en escritorio](docs/profile-settings-desktop.png) · [Inicio de sesión](docs/sign-in-mobile.png) · [Arquitectura del perfil y acceso](docs/profile-auth.md).
+
+La base ahora tiene **Tareas, Buscar, Crear y Ajustes en la barra inferior móvil**, navegación lateral en escritorio y configuración por categorías. El drawer móvil conserva los filtros de tareas. Tema, tamaño de texto, filas compactas, visibilidad de completadas y nombre del espacio modifican realmente la interfaz.
+
+Los nuevos controles `WorkspaceChoice` y `WorkspaceToggle` están escritos en `lib/design_system/workspace_controls.dart`, componiendo `AFBaseButton`, tokens y piezas Flutter. `SettingsCubit` conserva las preferencias de sesión por encima de las pantallas; `WorkspaceCubit` conserva las tareas. No se añadieron dependencias.
+
+![Ajustes personalizados en escritorio](docs/phase2-settings-desktop.png)
+
+[Navegación móvil](docs/phase2-mobile.png) · [Ajustes móviles](docs/phase2-settings-mobile.png) · [Tema oscuro](docs/phase2-settings-dark.png) · **[Guía de la fase 2](docs/phase2.md)**.
+
+Las preferencias y tareas siguen en memoria: se reinician al cerrar la app. Restablecer preferencias conserva las tareas de la sesión. Las capturas siguientes corresponden a la primera fase.
+
 ![Vista de escritorio con el sistema visual de AppFlowy](docs/desktop.png)
 
 [Ver la vista móvil](docs/mobile.png).
@@ -58,10 +80,19 @@ Aquí no se usa el dashboard anterior de `NavigationRail`, `NavigationBar`, tarj
 
 ```text
 lib/
-  main.dart                              Arranque y selección claro/oscuro
+  main.dart                              Proveedor de ajustes, temas y escala de texto
   design_system/
     theme.dart                           Puente entre Flutter y los tokens originales
     workspace_icon.dart                  Carga y coloreado de los SVG locales
+    workspace_controls.dart              Opciones seleccionables e interruptor propios
+  settings/
+    application/settings_cubit.dart      Preferencias inmutables y validación
+    presentation/settings_page.dart      Apariencia, espacio y acerca de
+    presentation/settings_widgets.dart   Tarjeta de perfil, avatar y grupos
+    presentation/profile_editor.dart     Edición validada del perfil local
+  auth/
+    application/auth_cubit.dart           Contrato, servicio demo y estados de sesión
+    presentation/sign_in_page.dart        Formulario, carga y errores
   workspace/
     application/
       workspace_cubit.dart                Modelo, estado inmutable y acciones
@@ -135,7 +166,7 @@ No hace falta añadir Freezed, GetIt ni servicios vacíos para aprender este flu
 
 ### 4. La adaptación depende del espacio disponible
 
-`LayoutBuilder` mide el ancho disponible. Desde 900 px muestra una barra lateral fija; por debajo la misma navegación aparece en un panel desplegable. La lógica de tareas permanece por encima de ese cambio, por lo que redimensionar no la reinicia.
+`LayoutBuilder` mide el ancho disponible. Desde 900 px muestra una barra lateral fija; por debajo aparece la barra inferior y un panel desplegable para los filtros. La lógica de tareas permanece por encima de ese cambio, por lo que redimensionar no la reinicia. `IndexedStack` conserva el contenido de tareas y ajustes al alternar entre ellos.
 
 `Expanded`, `Wrap` y el desplazamiento permiten distribuir el contenido sin fijar toda la pantalla en píxeles. La anchura máxima de lectura evita que las filas se alarguen demasiado en monitores grandes.
 

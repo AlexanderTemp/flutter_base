@@ -75,7 +75,9 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
                       button: true,
                       container: true,
                       child: AFFilledTextButton.primary(
-                          text: 'Crear', onTap: _submit)),
+                          key: const ValueKey('submit-task'),
+                          text: 'Crear',
+                          onTap: _submit)),
                 ],
               ),
             ],

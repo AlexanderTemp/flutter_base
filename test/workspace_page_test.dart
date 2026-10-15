@@ -18,11 +18,11 @@ void main() {
     await tester.ensureVisible(find.byKey(const ValueKey('new-task')));
     await tester.tap(find.byKey(const ValueKey('new-task')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Crear'));
+    await tester.tap(find.byKey(const ValueKey('submit-task')));
     await tester.pumpAndSettle();
     expect(find.text('Escribe un título'), findsOneWidget);
     await tester.enterText(find.byType(TextField).last, 'Mi tarea de prueba');
-    await tester.tap(find.text('Crear'));
+    await tester.tap(find.byKey(const ValueKey('submit-task')));
     await tester.pumpAndSettle();
 
     tester.view.physicalSize = const Size(1280, 900);
