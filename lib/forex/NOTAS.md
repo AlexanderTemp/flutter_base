@@ -1,47 +1,50 @@
-# Módulo Forex Factory — Fase 1
+# App Forex — standalone, sin backend, sin IA
 
-Noticias de alto impacto (rojas) de Forex Factory dentro de la app, **sin IA,
-sin servidor, sin tokens**. Rama: `feature/ff-watch`.
+App dedicada a Forex. **Todo vive en la app** (Dart): nada de servidor, nada de
+Python, nada de API keys. Rama: `feature/ff-watch`.
 
-## Qué hace hoy (Fase 1)
+## Pestañas
 
-- Descarga el **feed oficial de FairEconomy** (`ff_calendar_thisweek.json`), la
-  misma fuente que alimenta el calendario de FF.
-- Lista las noticias **rojas** de hoy / de la semana con su **forecast** y
-  **previo** (pantalla `ForexPage`, accesible desde el botón 📈 de la barra).
-- **Pre-aviso** con notificación local ~5 min antes de cada noticia roja
-  (mientras la app está en primer plano / escritorio abierto).
+1. **📅 Próximas** — calendario de noticias con filtros (impacto Alto/Medio/Bajo,
+   divisa, Hoy/Semana). Fuente: feed oficial de FairEconomy. Auto-refresco 60 s.
+   Pre-avisos con notificación local ~5 min antes.
+2. **📰 Noticias** — últimas noticias forex por RSS (FXStreet + Investing.com).
+   Auto-refresco 3 min.
+3. **🧠 Análisis** — precios cripto en vivo (CoinGecko: BTC/ETH/SOL) + análisis
+   por plantillas de las noticias de alto impacto, con su **reacción típica en
+   cripto**. Heurística educativa, no consejo financiero.
+
+## Fuentes (todas accesibles desde Dart, verificado)
+
+| Dato | Fuente | Nota |
+|---|---|---|
+| Calendario + forecast/previo | `nfs.faireconomy.media` (feed oficial) | sin `actual` |
+| Noticias | RSS FXStreet + Investing.com | |
+| Precios cripto | CoinGecko `simple/price` | con cambio 24 h |
+
+## Limitación conocida (sin backend)
+
+El valor **`actual`** (el dato real cuando sale la noticia) vive en
+`forexfactory.com/calendar`, que **Cloudflare bloquea para el cliente HTTP de
+Dart** (403; curl/navegador sí pasan). Por eso, **sin backend**:
+
+- El análisis de la pestaña 🧠 es **pre-release / esperado** (forecast vs previo
+  + tipo de indicador), no el veredicto post-dato.
+- El motor de reglas post-`actual` está en `ff_analyzer.dart` (probado), listo
+  por si algún día se decide una fuente que lo permita.
 
 ## Archivos
 
-| Archivo | Rol |
-|---|---|
-| `ff_models.dart` | modelos (`FfEvent`, `FfDetail`, `FfHistoryPoint`) — Dart puro |
-| `ff_feed_client.dart` | **cliente del feed** (lo que usa la app; funciona desde Dart) |
-| `ff_client.dart` | cliente de `/calendar` + detalle — para el **proxy** (fase 2) |
-| `ff_analyzer.dart` | motor de reglas alcista/bajista (Usual Effect) — sin IA |
-| `ff_notifications.dart` | notificaciones locales (Android/iOS/macOS/Linux) |
-| `forex_controller.dart` | estado + pre-avisos en primer plano |
-| `forex_page.dart` | UI de la lista |
-| `../../tool/ff_demo.dart` | demo de consola: `dart run tool/ff_demo.dart --week` |
-
-## Limitación encontrada (importante)
-
-El cliente HTTP de Dart recibe **403** en `www.forexfactory.com/calendar`
-(Cloudflare ficha su huella TLS; `curl` y Python sí pasan). Por eso:
-
-- ✅ La app **sí** lee el **feed** → programación + forecast + previo.
-- ❌ La app **no** puede leer `/calendar` → de ahí salen el **valor `actual`**
-  y la **regla de interpretación** (`ff_client.dart` + `ff_analyzer.dart` ya
-  están listos, pero necesitan ejecutarse desde fuera del móvil).
-
-## Fase 2 (pendiente)
-
-1. **Mini-proxy** (reutiliza `ff_client.dart`/`ff_analyzer.dart` en Python o
-   Dart de servidor): sondea `/calendar`, saca el `actual` y el veredicto
-   alcista/bajista, y lo expone por REST/WebSocket a la app.
-2. **Push** (FCM) para avisar en el móvil con la app cerrada.
-3. **Tray icon** de escritorio (`tray_manager` + `window_manager`).
-
-> El veredicto alcista/bajista ya está implementado y probado en
-> `ff_analyzer.dart`; solo le falta la fuente del `actual` (el proxy).
+```
+main.dart                      entrada (ForexApp + tema)
+forex/forex_page.dart          shell con las 3 pestañas
+forex/calendar_view.dart       pestaña Próximas
+forex/forex_controller.dart    estado + filtros + auto-refresco + pre-avisos
+forex/ff_feed_client.dart      feed FairEconomy (lo que usa la app)
+forex/ff_models.dart           modelos
+forex/ff_notifications.dart    notificaciones locales
+forex/news/                    pestaña Noticias (RSS)
+forex/crypto/                  precios cripto (CoinGecko)
+forex/analysis/                pestaña Análisis (plantillas + reacción cripto)
+forex/ff_analyzer.dart         motor de reglas alcista/bajista (post-actual)
+```

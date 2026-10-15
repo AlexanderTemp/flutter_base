@@ -48,6 +48,14 @@ class ForexController extends ChangeNotifier {
     return list;
   }
 
+  /// Todas las de alto impacto de la semana (para la pestaña de Análisis),
+  /// sin aplicar los filtros del usuario. Ordenadas por hora.
+  List<FfEvent> get highImpactEvents {
+    final out = _all.where((e) => e.impact == 'high').toList()
+      ..sort((a, b) => a.time.compareTo(b.time));
+    return out;
+  }
+
   /// Eventos ya filtrados y ordenados por hora.
   List<FfEvent> get events {
     final now = DateTime.now();
