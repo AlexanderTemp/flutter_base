@@ -96,29 +96,35 @@ class _AFBaseButtonState extends State<AFBaseButton> {
           onExit: (_) => setState(() => isHovering = false),
           child: GestureDetector(
             onTap: widget.disabled ? null : widget.onTap,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(widget.borderRadius),
-                border: isFocused && widget.showFocusRing
-                    ? Border.all(
-                        color: ringColor,
-                        width: 2,
-                        strokeAlign: BorderSide.strokeAlignOutside,
-                      )
-                    : null,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minWidth: kMinInteractiveDimension,
+                minHeight: kMinInteractiveDimension,
               ),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: backgroundColor,
-                  border: Border.all(color: borderColor),
                   borderRadius: BorderRadius.circular(widget.borderRadius),
+                  border: isFocused && widget.showFocusRing
+                      ? Border.all(
+                          color: ringColor,
+                          width: 2,
+                          strokeAlign: BorderSide.strokeAlignOutside,
+                        )
+                      : null,
                 ),
-                child: Padding(
-                  padding: widget.padding,
-                  child: widget.builder(
-                    context,
-                    isHovering,
-                    widget.disabled,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: backgroundColor,
+                    border: Border.all(color: borderColor),
+                    borderRadius: BorderRadius.circular(widget.borderRadius),
+                  ),
+                  child: Padding(
+                    padding: widget.padding,
+                    child: widget.builder(
+                      context,
+                      isHovering,
+                      widget.disabled,
+                    ),
                   ),
                 ),
               ),

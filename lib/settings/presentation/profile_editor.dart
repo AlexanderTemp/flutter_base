@@ -7,31 +7,28 @@ import '../application/settings_cubit.dart';
 import 'settings_widgets.dart';
 
 class ProfileEditor extends StatefulWidget {
-  const ProfileEditor({super.key});
+  const ProfileEditor(
+      {super.key,
+      required this.nameController,
+      required this.bioController,
+      required this.color,
+      required this.onColorChanged});
+
+  final TextEditingController nameController;
+  final TextEditingController bioController;
+  final int color;
+  final ValueChanged<int> onColorChanged;
 
   @override
   State<ProfileEditor> createState() => _ProfileEditorState();
 }
 
 class _ProfileEditorState extends State<ProfileEditor> {
-  late final _name = TextEditingController(
-      text: context.read<SettingsCubit>().state.profileName);
-  late final _bio = TextEditingController(
-      text: context.read<SettingsCubit>().state.profileBio);
-  late int _color = context.read<SettingsCubit>().state.avatarColor;
   final _nameKey = GlobalKey<AFTextFieldState>();
 
-  @override
-  void dispose() {
-    _name.dispose();
-    _bio.dispose();
-    super.dispose();
-  }
-
   void _save() {
-    if (!context
-        .read<SettingsCubit>()
-        .updateProfile(_name.text, _bio.text, _color)) {
+    if (!context.read<SettingsCubit>().updateProfile(
+        widget.nameController.text, widget.bioController.text, widget.color)) {
       _nameKey.currentState!
           .syncError(errorText: 'Escribe un nombre de entre 1 y 40 caracteres');
       return;
@@ -54,7 +51,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
           alignment: Alignment.centerLeft,
           child: ProfileAvatar(
               name: context.watch<SettingsCubit>().state.profileName,
-              color: _color,
+              color: widget.color,
               size: 72)),
       const SizedBox(height: 16),
       Wrap(spacing: 8, runSpacing: 8, children: [
@@ -66,8 +63,8 @@ class _ProfileEditorState extends State<ProfileEditor> {
         ])
           WorkspaceChoice(
               label: label,
-              selected: _color == index,
-              onTap: () => setState(() => _color = index)),
+              selected: widget.color == index,
+              onTap: () => widget.onColorChanged(index)),
       ]),
       const SizedBox(height: 24),
       label('Nombre para mostrar'),
@@ -75,7 +72,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
           label: 'Nombre para mostrar',
           child: AFTextField(
               key: _nameKey,
-              controller: _name,
+              controller: widget.nameController,
               maxLength: 40,
               onChanged: (_) => _nameKey.currentState!.clearError())),
       const SizedBox(height: 20),
@@ -83,7 +80,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
       Semantics(
           label: 'Sobre ti',
           child: AFTextField(
-              controller: _bio,
+              controller: widget.bioController,
               hintText: 'Unas palabras sobre ti…',
               maxLength: 160,
               onSubmitted: (_) => _save())),

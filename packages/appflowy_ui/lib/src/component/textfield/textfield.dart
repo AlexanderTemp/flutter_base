@@ -96,7 +96,7 @@ class AFTextField extends StatefulWidget {
 }
 
 class _AFTextFieldState extends AFTextFieldState {
-  late final TextEditingController effectiveController;
+  late TextEditingController effectiveController;
 
   bool hasError = false;
   String errorText = '';
@@ -117,6 +117,24 @@ class _AFTextFieldState extends AFTextFieldState {
     effectiveController.addListener(_validate);
 
     isObscured = widget.obscureText;
+  }
+
+  @override
+  void didUpdateWidget(covariant AFTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      final previous = effectiveController;
+      previous.removeListener(_validate);
+      effectiveController =
+          widget.controller ?? TextEditingController.fromValue(previous.value);
+      if (oldWidget.controller == null) previous.dispose();
+      effectiveController.addListener(_validate);
+      hasError = false;
+      errorText = '';
+    }
+    if (oldWidget.obscureText != widget.obscureText) {
+      isObscured = widget.obscureText;
+    }
   }
 
   @override
@@ -198,7 +216,7 @@ class _AFTextFieldState extends AFTextFieldState {
           color: theme.textColorScheme.tertiary,
         ),
         isDense: true,
-        constraints: BoxConstraints(),
+        constraints: const BoxConstraints(minHeight: kMinInteractiveDimension),
         contentPadding: contentPadding,
         border: border,
         enabledBorder: enabledBorder,

@@ -2,6 +2,12 @@
 
 Esta base reutiliza **el sistema visual real de AppFlowy**: el paquete `appflowy_ui`, sus temas claro/oscuro, tokens de color, tipografía, radios, botones, campos y modales. También incluye cuatro iconos SVG del proyecto original. La pantalla adapta esa base a un espacio de tareas con barra lateral, cabecera discreta, superficie plana y filas compactas.
 
+## Auditoría y correcciones
+
+Se corrigieron los cinco hallazgos de la auditoría: conservación del borrador de perfil al redimensionar, zonas táctiles mínimas, contraste, respuesta tardía del acceso y cambio de controlador del campo. Las adaptaciones del paquete original están registradas en `THIRD_PARTY.md`.
+
+**Comprobado:** análisis estático sin incidencias, 22 pruebas aprobadas, guías Flutter de áreas táctiles/etiquetas/contraste en los recorridos probados claro/oscuro y compilaciones debug Android y Linux. La ejecución en un dispositivo Android sigue pendiente. Consulta [la auditoría y sus correcciones](docs/audit-fixes.md).
+
 ## Fase 2: navegación y ajustes propios
 
 ### Vista completa de ajustes, perfil y acceso demo
@@ -57,7 +63,7 @@ Las carpetas nativas de Android, iOS, Linux, macOS y Windows ya existen. iOS/mac
 
 | Pieza | Procedencia | Dónde verla |
 |---|---|---|
-| Paleta clara/oscura y tokens semánticos | AppFlowy, sin cambiar sus valores | `packages/appflowy_ui/lib/src/theme/` |
+| Paleta clara/oscura y tokens semánticos | AppFlowy con ajustes locales de contraste documentados | `packages/appflowy_ui/lib/src/theme/` |
 | Tipografía, tamaños y pesos | AppFlowy; familia por defecto de la plataforma | `theme/definition/text_style/` dentro del paquete |
 | Botones, hover y anillo de foco | AppFlowy | `AFFilledTextButton`, `AFOutlinedTextButton`, `AFGhostButton`, `AFBaseButton` |
 | Campo y mensajes de error | AppFlowy | `AFTextField` |

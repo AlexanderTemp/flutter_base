@@ -10,7 +10,7 @@ Referencias del original: `mobile/presentation/home/mobile_home_setting_page.dar
 
 ## Perfil local
 
-`SettingsCubit` incorpora nombre para mostrar, descripción y color del avatar. `ProfileEditor` mantiene un borrador y lo aplica al guardar.
+`SettingsCubit` incorpora nombre para mostrar, descripción y color del avatar. `SettingsPage` es dueña del borrador y de sus controladores, por encima de las ramas de layout; `ProfileEditor` los recibe y aplica el perfil al guardar. Así el borrador sobrevive a cambios entre escritorio, índice móvil y detalles.
 
 - Nombre: obligatorio, hasta 40 caracteres percibidos por el usuario, después de `trim`.
 - Descripción: opcional, hasta 160 caracteres.
@@ -35,6 +35,8 @@ Sesión activa → Cerrar sesión → AuthRepository.signOut
 ```
 
 `AuthCubit` evita solicitudes simultáneas y no emite si se cierra antes de recibir una respuesta. No almacena la contraseña en el estado ni en disco. `SignInPage` libera sus controladores en `dispose`.
+
+`SignInPage` escucha la transición global a sesión activa mediante `BlocConsumer`. Si sigue siendo la ruta actual, se cierra incluso si la solicitud procedía de un formulario anterior que se cerró y reabrió. Una ruta que ya está cerrándose no intenta cerrar otra pantalla.
 
 Cerrar el formulario permite seguir como invitado. Cerrar sesión no borra las tareas de esta demostración local. Una aplicación con datos privados por usuario debe definir esa separación al incorporar el backend y la persistencia.
 

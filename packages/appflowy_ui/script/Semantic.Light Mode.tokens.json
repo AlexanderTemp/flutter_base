@@ -6,11 +6,11 @@
     },
     "secondary": {
       "$type": "color",
-      "$value": "{Neutral.600}"
+      "$value": "{Neutral.700}"
     },
     "tertiary": {
       "$type": "color",
-      "$value": "{Neutral.500}"
+      "$value": "{Neutral.700}"
     },
     "quaternary": {
       "$type": "color",
@@ -22,11 +22,11 @@
     },
     "action": {
       "$type": "color",
-      "$value": "{Blue.600}"
+      "$value": "{Blue.800}"
     },
     "action-hover": {
       "$type": "color",
-      "$value": "{Blue.700}"
+      "$value": "{Blue.900}"
     },
     "info": {
       "$type": "color",
@@ -266,11 +266,11 @@
     },
     "theme-thick": {
       "$type": "color",
-      "$value": "{Blue.500}"
+      "$value": "{Blue.800}"
     },
     "theme-thick-hover": {
       "$type": "color",
-      "$value": "{Blue.600}"
+      "$value": "{Blue.900}"
     },
     "theme-select": {
       "$type": "color",

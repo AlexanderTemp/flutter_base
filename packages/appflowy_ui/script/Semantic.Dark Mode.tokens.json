@@ -10,7 +10,7 @@
     },
     "tertiary": {
       "$type": "color",
-      "$value": "{Neutral.600}"
+      "$value": "{Neutral.500}"
     },
     "quaternary": {
       "$type": "color",
@@ -266,11 +266,11 @@
     },
     "theme-thick": {
       "$type": "color",
-      "$value": "{Blue.500}"
+      "$value": "{Blue.800}"
     },
     "theme-thick-hover": {
       "$type": "color",
-      "$value": "{Blue.600}"
+      "$value": "{Blue.900}"
     },
     "theme-select": {
       "$type": "color",

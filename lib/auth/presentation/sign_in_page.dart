@@ -24,9 +24,7 @@ class _SignInPageState extends State<SignInPage> {
   }
 
   Future<void> _submit() async {
-    final success =
-        await context.read<AuthCubit>().signIn(_email.text, _password.text);
-    if (mounted && success) Navigator.of(context).pop();
+    await context.read<AuthCubit>().signIn(_email.text, _password.text);
   }
 
   @override
@@ -45,7 +43,14 @@ class _SignInPageState extends State<SignInPage> {
               child: Center(
                   child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 440),
-            child: BlocBuilder<AuthCubit, AuthState>(
+            child: BlocConsumer<AuthCubit, AuthState>(
+                listenWhen: (previous, current) =>
+                    previous.user == null && current.user != null,
+                listener: (context, _) {
+                  if (ModalRoute.of(context)?.isCurrent == true) {
+                    Navigator.of(context).pop();
+                  }
+                },
                 builder: (context, state) => ListView(
                         shrinkWrap: true,
                         padding: const EdgeInsets.all(28),

@@ -32,6 +32,25 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   SettingsSection? _section;
+  late final TextEditingController _profileName;
+  late final TextEditingController _profileBio;
+  late int _avatarColor;
+
+  @override
+  void initState() {
+    super.initState();
+    final settings = context.read<SettingsCubit>().state;
+    _profileName = TextEditingController(text: settings.profileName);
+    _profileBio = TextEditingController(text: settings.profileBio);
+    _avatarColor = settings.avatarColor;
+  }
+
+  @override
+  void dispose() {
+    _profileName.dispose();
+    _profileBio.dispose();
+    super.dispose();
+  }
 
   void _select(SettingsSection? section) {
     FocusManager.instance.primaryFocus?.unfocus();
@@ -118,7 +137,13 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 32),
           ...switch (section) {
             SettingsSection.profile => [
-                const ProfileEditor(),
+                ProfileEditor(
+                  nameController: _profileName,
+                  bioController: _profileBio,
+                  color: _avatarColor,
+                  onColorChanged: (color) =>
+                      setState(() => _avatarColor = color),
+                ),
                 SettingsGroup(title: 'Sesión', children: [
                   SettingsTile(
                       key: const ValueKey('profile-session'),

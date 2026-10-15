@@ -7,6 +7,8 @@ import 'package:flutter_workspace/auth/application/auth_cubit.dart';
 import 'package:flutter_workspace/main.dart';
 import 'package:flutter_workspace/settings/presentation/profile_editor.dart';
 import 'package:flutter_workspace/settings/presentation/settings_page.dart';
+import 'package:flutter_workspace/settings/application/settings_cubit.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class _RetryAuthRepository implements AuthRepository {
   final first = Completer<AuthUser>();
@@ -25,6 +27,84 @@ class _RetryAuthRepository implements AuthRepository {
 }
 
 void main() {
+  Future<void> tap(WidgetTester tester, String key) async {
+    final finder = find.byKey(ValueKey(key));
+    if (finder.evaluate().isEmpty) {
+      await tester.scrollUntilVisible(
+          finder, key == 'settings-profile' ? -180 : 180,
+          scrollable: find
+              .descendant(
+                  of: find.byType(SettingsPage),
+                  matching: find.byType(Scrollable))
+              .last);
+    }
+    await tester.ensureVisible(finder);
+    await tester.pumpAndSettle();
+    await tester.tap(finder);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets(
+      'el borrador de perfil conserva nombre, descripción y color al redimensionar',
+      (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 900);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const WorkspaceApp());
+    await tap(tester, 'sidebar-settings');
+    final fields = find.descendant(
+        of: find.byType(ProfileEditor), matching: find.byType(TextField));
+    await tester.enterText(fields.first, 'Borrador pendiente');
+    await tester.enterText(fields.last, 'Descripción pendiente');
+    await tester.tap(find.text('Violeta'));
+    await tester.pumpAndSettle();
+    tester.view.physicalSize = const Size(900, 900);
+    await tester.pumpAndSettle();
+    await tap(tester, 'settings-profile');
+    expect(tester.widget<TextField>(fields.first).controller!.text,
+        'Borrador pendiente');
+    expect(tester.widget<TextField>(fields.last).controller!.text,
+        'Descripción pendiente');
+    expect(tester.widget<ProfileEditor>(find.byType(ProfileEditor)).color, 3);
+    final cubit =
+        tester.element(find.byType(ProfileEditor)).read<SettingsCubit>();
+    expect(cubit.state.profileName, 'Mi perfil');
+    tester.view.physicalSize = const Size(1280, 900);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Guardar perfil'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Guardar perfil'));
+    await tester.pumpAndSettle();
+    expect(cubit.state.profileName, 'Borrador pendiente');
+    expect(cubit.state.profileBio, 'Descripción pendiente');
+    expect(cubit.state.avatarColor, 3);
+  });
+
+  testWidgets(
+      'el acceso reabierto se cierra al completarse una solicitud anterior',
+      (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 900);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final repository = _RetryAuthRepository();
+    await tester.pumpWidget(WorkspaceApp(authRepository: repository));
+    await tap(tester, 'bottom-settings');
+    await tap(tester, 'account-entry');
+    await tester.enterText(find.byType(TextField).first, 'demo@ejemplo.com');
+    await tester.enterText(find.byType(TextField).last, 'ficticia');
+    await tap(tester, 'sign-in-submit');
+    await tester.tap(find.byTooltip('Cerrar inicio de sesión'));
+    await tester.pumpAndSettle();
+    await tap(tester, 'account-entry');
+    repository.first
+        .complete(const AuthUser(id: 'demo', email: 'demo@ejemplo.com'));
+    await tester.pumpAndSettle();
+    expect(find.byType(SignInPage), findsNothing);
+    expect(find.text('Sesión de demostración'), findsOneWidget);
+    expect(repository.calls, 1);
+  });
   testWidgets('acceso muestra carga, error del servicio y permite reintentar',
       (tester) async {
     final repository = _RetryAuthRepository();
@@ -56,23 +136,6 @@ void main() {
     expect(find.byType(SignInPage), findsNothing);
     expect(find.text('Sesión de demostración'), findsOneWidget);
   });
-  Future<void> tap(WidgetTester tester, String key) async {
-    final finder = find.byKey(ValueKey(key));
-    if (finder.evaluate().isEmpty) {
-      await tester.scrollUntilVisible(
-          finder, key == 'settings-profile' ? -180 : 180,
-          scrollable: find
-              .descendant(
-                  of: find.byType(SettingsPage),
-                  matching: find.byType(Scrollable))
-              .last);
-    }
-    await tester.ensureVisible(finder);
-    await tester.pumpAndSettle();
-    await tester.tap(finder);
-    await tester.pumpAndSettle();
-  }
-
   testWidgets('perfil editable, volver, acceso demo y cierre sin borrar tareas',
       (tester) async {
     tester.view.devicePixelRatio = 1;
