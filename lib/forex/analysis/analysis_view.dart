@@ -1,26 +1,24 @@
 // Pestaña "Análisis": precios cripto en vivo + análisis por plantillas de las
-// noticias de alto impacto, con su reacción típica en cripto.
+// noticias de alto impacto con reacción cripto. Design system AppFlowy.
+import 'package:appflowy_ui/appflowy_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../crypto/crypto_client.dart';
 import '../crypto/crypto_controller.dart';
 import '../ff_models.dart';
 import '../forex_controller.dart';
+import '../ui.dart';
 import 'impact_analysis.dart';
 
 class AnalysisView extends StatelessWidget {
-  const AnalysisView({
-    super.key,
-    required this.forex,
-    required this.crypto,
-  });
+  const AnalysisView({super.key, required this.forex, required this.crypto});
 
   final ForexController forex;
   final CryptoController crypto;
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final t = AppFlowyTheme.of(context);
     final events = forex.highImpactEvents;
     return RefreshIndicator(
       onRefresh: () async {
@@ -29,17 +27,22 @@ class AnalysisView extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.all(12),
         children: [
-          _CryptoBar(crypto: crypto),
+          AfCard(child: _CryptoBar(crypto: crypto)),
           const SizedBox(height: 10),
-          _disclaimer(context, cs),
+          _disclaimer(context, t),
           const SizedBox(height: 12),
           Text('Noticias de alto impacto',
-              style: Theme.of(context).textTheme.titleMedium),
+              style: t.textStyle.heading4
+                  .enhanced(color: t.textColorScheme.primary)),
           const SizedBox(height: 8),
           if (events.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(child: Text('Sin noticias de alto impacto cargadas.')),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Center(
+                child: Text('Sin noticias de alto impacto cargadas.',
+                    style: t.textStyle.body
+                        .standard(color: t.textColorScheme.secondary)),
+              ),
             )
           else
             ...events.map((e) => Padding(
@@ -51,21 +54,22 @@ class AnalysisView extends StatelessWidget {
     );
   }
 
-  Widget _disclaimer(BuildContext context, ColorScheme cs) => Container(
+  Widget _disclaimer(BuildContext context, AppFlowyThemeData t) => Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: cs.tertiaryContainer.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(8),
+          color: t.fillColorScheme.warningLight,
+          borderRadius: BorderRadius.circular(t.borderRadius.m),
         ),
         child: Row(
           children: [
-            Icon(Icons.info_outline, size: 18, color: cs.onTertiaryContainer),
+            Icon(Icons.info_outline, size: 18, color: t.textColorScheme.warning),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'Heurística educativa, no es consejo financiero. '
                 'La reacción real del mercado puede variar.',
-                style: Theme.of(context).textTheme.bodySmall,
+                style: t.textStyle.caption
+                    .standard(color: t.textColorScheme.primary),
               ),
             ),
           ],
@@ -79,14 +83,19 @@ class _CryptoBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppFlowyTheme.of(context);
     if (crypto.prices.isEmpty) {
       return SizedBox(
-        height: 60,
+        height: 44,
         child: Center(
           child: crypto.loading
               ? const SizedBox(
-                  width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-              : Text(crypto.error ?? 'Sin datos de cripto'),
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2))
+              : Text(crypto.error ?? 'Sin datos de cripto',
+                  style: t.textStyle.caption
+                      .standard(color: t.textColorScheme.secondary)),
         ),
       );
     }
@@ -103,27 +112,22 @@ class _CryptoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppFlowyTheme.of(context);
     final up = price.change24h >= 0;
-    final color = up ? Colors.green : Colors.red;
+    final color = up ? t.textColorScheme.success : t.textColorScheme.error;
     return Column(
       children: [
         Text(price.symbol,
-            style: Theme.of(context)
-                .textTheme
-                .labelMedium
-                ?.copyWith(fontWeight: FontWeight.bold)),
+            style: t.textStyle.caption.enhanced(color: t.textColorScheme.primary)),
         Text('\$${_fmt(price.usd)}',
-            style: Theme.of(context).textTheme.titleMedium),
+            style: t.textStyle.body.standard(color: t.textColorScheme.primary)),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(up ? Icons.arrow_drop_up : Icons.arrow_drop_down,
                 color: color, size: 18),
             Text('${price.change24h.toStringAsFixed(2)}%',
-                style: Theme.of(context)
-                    .textTheme
-                    .labelSmall
-                    ?.copyWith(color: color)),
+                style: t.textStyle.caption.standard(color: color)),
           ],
         ),
       ],
@@ -142,53 +146,51 @@ class _AnalysisCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppFlowyTheme.of(context);
     final a = ImpactAnalyzer.analyze(event);
     final hhmm =
         '${event.time.hour.toString().padLeft(2, '0')}:${event.time.minute.toString().padLeft(2, '0')}';
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 4,
-                  height: 16,
-                  color: Colors.red,
-                ),
-                const SizedBox(width: 8),
-                Text('${event.currency} · ${event.name}',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyLarge
-                        ?.copyWith(fontWeight: FontWeight.w600)),
-                const Spacer(),
-                Text(hhmm, style: Theme.of(context).textTheme.labelSmall),
-              ],
-            ),
-            const SizedBox(height: 6),
-            _row(context, Icons.category_outlined, '${a.category}: ${a.measures}'),
-            _row(context, Icons.trending_up, a.expectation),
-            _row(context, Icons.currency_bitcoin, a.cryptoReaction),
-          ],
-        ),
+    return AfCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(width: 4, height: 16, color: t.textColorScheme.error),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('${event.currency} · ${event.name}',
+                    style: t.textStyle.body
+                        .enhanced(color: t.textColorScheme.primary)),
+              ),
+              Text(hhmm,
+                  style: t.textStyle.caption
+                      .standard(color: t.textColorScheme.tertiary)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          _row(context, t, Icons.category_outlined,
+              '${a.category}: ${a.measures}'),
+          _row(context, t, Icons.trending_up, a.expectation),
+          _row(context, t, Icons.currency_bitcoin, a.cryptoReaction),
+        ],
       ),
     );
   }
 
-  Widget _row(BuildContext context, IconData icon, String text) => Padding(
+  Widget _row(BuildContext context, AppFlowyThemeData t, IconData icon,
+          String text) =>
+      Padding(
         padding: const EdgeInsets.only(top: 6),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
+            Icon(icon, size: 16, color: t.textColorScheme.action),
             const SizedBox(width: 8),
             Expanded(
                 child: Text(text,
-                    style: Theme.of(context).textTheme.bodySmall)),
+                    style: t.textStyle.caption
+                        .standard(color: t.textColorScheme.secondary))),
           ],
         ),
       );

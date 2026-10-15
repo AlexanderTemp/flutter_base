@@ -1,9 +1,11 @@
 // Pestaña "Próximas": calendario de noticias con filtros (impacto, divisa,
-// hoy/semana).
+// hoy/semana), agrupado por día. Construido sobre el design system AppFlowy.
+import 'package:appflowy_ui/appflowy_ui.dart';
 import 'package:flutter/material.dart';
 
 import 'ff_models.dart';
 import 'forex_controller.dart';
+import 'ui.dart';
 
 class CalendarView extends StatelessWidget {
   const CalendarView({super.key, required this.controller});
@@ -11,24 +13,19 @@ class CalendarView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final t = AppFlowyTheme.of(context);
     return Column(
       children: [
-        _filterBar(context, cs),
-        const Divider(height: 1),
-        Expanded(child: _body(context, cs)),
+        _filterBar(context, t),
+        Divider(height: 1, color: t.borderColorScheme.primary),
+        Expanded(child: _body(context, t)),
       ],
     );
   }
 
-  Widget _filterBar(BuildContext context, ColorScheme cs) {
+  Widget _filterBar(BuildContext context, AppFlowyThemeData t) {
     final c = controller;
     const impactLabels = {'high': 'Alto', 'medium': 'Medio', 'low': 'Bajo'};
-    const impactColors = {
-      'high': Colors.red,
-      'medium': Colors.orange,
-      'low': Colors.amber
-    };
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
       child: Column(
@@ -48,7 +45,8 @@ class CalendarView extends StatelessWidget {
               const Spacer(),
               if (c.lastUpdated != null)
                 Text('Actualizado ${_hhmm(c.lastUpdated!)}',
-                    style: Theme.of(context).textTheme.labelSmall),
+                    style: t.textStyle.caption
+                        .standard(color: t.textColorScheme.tertiary)),
             ],
           ),
           const SizedBox(height: 8),
@@ -60,7 +58,7 @@ class CalendarView extends StatelessWidget {
                   label: Text(e.value),
                   selected: c.impacts.contains(e.key),
                   avatar: CircleAvatar(
-                      backgroundColor: impactColors[e.key], radius: 6),
+                      backgroundColor: impactColor(context, e.key), radius: 6),
                   onSelected: (_) => c.toggleImpact(e.key),
                 ),
             ],
@@ -89,7 +87,7 @@ class CalendarView extends StatelessWidget {
     );
   }
 
-  Widget _body(BuildContext context, ColorScheme cs) {
+  Widget _body(BuildContext context, AppFlowyThemeData t) {
     final c = controller;
     if (c.loading && c.events.isEmpty && c.lastUpdated == null) {
       return const Center(child: CircularProgressIndicator());
@@ -100,9 +98,12 @@ class CalendarView extends StatelessWidget {
     final events = c.events;
     if (events.isEmpty) {
       return Center(
-        child: Text(c.scope == ForexScope.today
-            ? 'No hay noticias con estos filtros hoy.'
-            : 'No hay noticias con estos filtros esta semana.'),
+        child: Text(
+          c.scope == ForexScope.today
+              ? 'No hay noticias con estos filtros hoy.'
+              : 'No hay noticias con estos filtros esta semana.',
+          style: t.textStyle.body.standard(color: t.textColorScheme.secondary),
+        ),
       );
     }
     final rows = _groupByDay(events);
@@ -123,7 +124,6 @@ class CalendarView extends StatelessWidget {
     );
   }
 
-  /// Mezcla cabeceras de día (DateTime) con los eventos (FfEvent).
   static List<Object> _groupByDay(List<FfEvent> events) {
     final rows = <Object>[];
     DateTime? last;
@@ -148,16 +148,19 @@ class _ErrorBox extends StatelessWidget {
   final VoidCallback onRetry;
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final t = AppFlowyTheme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.cloud_off, color: cs.error, size: 40),
+            Icon(Icons.cloud_off, color: t.textColorScheme.error, size: 40),
             const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
+            Text(message,
+                textAlign: TextAlign.center,
+                style: t.textStyle.body
+                    .standard(color: t.textColorScheme.secondary)),
             const SizedBox(height: 12),
             FilledButton(onPressed: onRetry, child: const Text('Reintentar')),
           ],
@@ -191,16 +194,16 @@ class _DayHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final t = AppFlowyTheme.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(2, 12, 2, 8),
       child: Row(
         children: [
           Text(_label(),
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: cs.primary, fontWeight: FontWeight.bold)),
+              style: t.textStyle.body.enhanced(color: t.textColorScheme.action)),
           const SizedBox(width: 10),
-          Expanded(child: Divider(color: cs.outlineVariant, height: 1)),
+          Expanded(
+              child: Divider(color: t.borderColorScheme.primary, height: 1)),
         ],
       ),
     );
@@ -211,90 +214,69 @@ class EventTile extends StatelessWidget {
   const EventTile({super.key, required this.event});
   final FfEvent event;
 
-  static const _impactColor = {
-    'high': Colors.red,
-    'medium': Colors.orange,
-    'low': Colors.amber,
-    'holiday': Colors.grey,
-  };
-
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final t = event.time;
+    final t = AppFlowyTheme.of(context);
+    final tm = event.time;
     final hhmm =
-        '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-    final past = t.isBefore(DateTime.now());
-    final color = _impactColor[event.impact] ?? Colors.red;
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Container(
-              width: 4,
-              height: 42,
-              decoration: BoxDecoration(
-                  color: color, borderRadius: BorderRadius.circular(2)),
-            ),
-            const SizedBox(width: 12),
-            Column(
+        '${tm.hour.toString().padLeft(2, '0')}:${tm.minute.toString().padLeft(2, '0')}';
+    final past = tm.isBefore(DateTime.now());
+    final color = impactColor(context, event.impact);
+    return AfCard(
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 42,
+            decoration: BoxDecoration(
+                color: color, borderRadius: BorderRadius.circular(2)),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(_dayLabel(tm),
+                  style: t.textStyle.caption
+                      .standard(color: t.textColorScheme.tertiary)),
+              Text(hhmm,
+                  style: t.textStyle.heading4
+                      .enhanced(color: t.textColorScheme.primary)),
+            ],
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_dayLabel(t),
-                    style: Theme.of(context).textTheme.labelSmall),
-                Text(hhmm,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold)),
+                Row(
+                  children: [
+                    AfPill(text: event.currency),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(event.name,
+                          style: t.textStyle.body
+                              .standard(color: t.textColorScheme.primary),
+                          overflow: TextOverflow.ellipsis),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Forecast ${event.forecast.isEmpty ? "—" : event.forecast}'
+                  '   ·   Previo ${event.previous.isEmpty ? "—" : event.previous}',
+                  style: t.textStyle.caption
+                      .standard(color: t.textColorScheme.secondary),
+                ),
               ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      _chip(context, event.currency, cs.primaryContainer,
-                          cs.onPrimaryContainer),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(event.name,
-                            style: Theme.of(context).textTheme.bodyLarge,
-                            overflow: TextOverflow.ellipsis),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Forecast ${event.forecast.isEmpty ? "—" : event.forecast}'
-                    '   ·   Previo ${event.previous.isEmpty ? "—" : event.previous}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-            if (past) Icon(Icons.check_circle, size: 18, color: cs.outline),
-          ],
-        ),
+          ),
+          if (past)
+            Icon(Icons.check_circle,
+                size: 18, color: t.textColorScheme.tertiary),
+        ],
       ),
     );
   }
-
-  Widget _chip(BuildContext context, String text, Color bg, Color fg) =>
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        decoration:
-            BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
-        child: Text(text,
-            style: Theme.of(context)
-                .textTheme
-                .labelMedium
-                ?.copyWith(color: fg, fontWeight: FontWeight.bold)),
-      );
 
   String _dayLabel(DateTime d) {
     const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];

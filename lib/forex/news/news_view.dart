@@ -1,7 +1,9 @@
-// Pestaña "Noticias": últimas noticias forex (RSS), auto-refrescadas.
+// Pestaña "Noticias": últimas noticias forex (RSS). Design system AppFlowy.
+import 'package:appflowy_ui/appflowy_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../ui.dart';
 import 'news_controller.dart';
 import 'news_models.dart';
 
@@ -11,6 +13,7 @@ class NewsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppFlowyTheme.of(context);
     final c = controller;
     if (c.loading && c.items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -22,9 +25,12 @@ class NewsView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.wifi_off, size: 40),
+              Icon(Icons.wifi_off, size: 40, color: t.textColorScheme.error),
               const SizedBox(height: 12),
-              Text(c.error!, textAlign: TextAlign.center),
+              Text(c.error!,
+                  textAlign: TextAlign.center,
+                  style: t.textStyle.body
+                      .standard(color: t.textColorScheme.secondary)),
               const SizedBox(height: 12),
               FilledButton(
                   onPressed: () => c.load(), child: const Text('Reintentar')),
@@ -51,52 +57,38 @@ class _NewsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Card(
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: item.link.isEmpty ? null : () => _open(context, item.link),
-        child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                      color: cs.secondaryContainer,
-                      borderRadius: BorderRadius.circular(6)),
-                  child: Text(item.source,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: cs.onSecondaryContainer,
-                          fontWeight: FontWeight.bold)),
-                ),
-                const Spacer(),
-                if (item.published != null)
-                  Text(_ago(item.published!),
-                      style: Theme.of(context).textTheme.labelSmall),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(item.title,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyLarge
-                    ?.copyWith(fontWeight: FontWeight.w600)),
-            if (item.description.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(item.description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall),
+    final t = AppFlowyTheme.of(context);
+    return AfCard(
+      onTap: item.link.isEmpty ? null : () => _open(context, item.link),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              AfPill(
+                text: item.source,
+                bg: t.fillColorScheme.infoLight,
+                fg: t.textColorScheme.info,
+              ),
+              const Spacer(),
+              if (item.published != null)
+                Text(_ago(item.published!),
+                    style: t.textStyle.caption
+                        .standard(color: t.textColorScheme.tertiary)),
             ],
+          ),
+          const SizedBox(height: 6),
+          Text(item.title,
+              style: t.textStyle.body.enhanced(color: t.textColorScheme.primary)),
+          if (item.description.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(item.description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: t.textStyle.caption
+                    .standard(color: t.textColorScheme.secondary)),
           ],
-        ),
-      ),
+        ],
       ),
     );
   }

@@ -1,7 +1,9 @@
 // App de Forex: noticias fuertes de Forex Factory con filtros, auto-refresco
-// y notificaciones. Punto de entrada.
+// y notificaciones. Usa el design system AppFlowy (tema propio).
+import 'package:appflowy_ui/appflowy_ui.dart';
 import 'package:flutter/material.dart';
 
+import 'design_system/theme.dart';
 import 'forex/forex_page.dart';
 
 void main() => runApp(const ForexApp());
@@ -26,20 +28,21 @@ class _ForexAppState extends State<ForexApp> {
 
   @override
   Widget build(BuildContext context) {
-    const seed = Color(0xFF1565C0);
     return MaterialApp(
       title: 'Forex Noticias',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: seed),
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorScheme:
-            ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark),
-      ),
+      theme: workspaceTheme(Brightness.light),
+      darkTheme: workspaceTheme(Brightness.dark),
       themeMode: _mode,
+      builder: (context, child) {
+        final builder = AppFlowyDefaultTheme();
+        return AppFlowyTheme(
+          data: Theme.of(context).brightness == Brightness.dark
+              ? builder.dark()
+              : builder.light(),
+          child: child!,
+        );
+      },
       home: ForexHomePage(onToggleTheme: _toggleTheme),
     );
   }
