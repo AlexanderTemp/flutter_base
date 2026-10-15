@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../design_system/workspace_icon.dart';
+import '../../forex/forex_page.dart';
 import '../../settings/application/settings_cubit.dart';
 import '../../settings/presentation/settings_page.dart';
 import '../application/workspace_cubit.dart';
@@ -148,6 +149,12 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
                             overflow: TextOverflow.ellipsis,
                             style: theme.textStyle.caption.standard(
                                 color: theme.textColorScheme.secondary))),
+                    WorkspaceIconButton(
+                        label: 'Noticias Forex',
+                        icon: Icons.trending_up,
+                        onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const ForexPage()))),
                     WorkspaceIconButton(
                         label: 'Cambiar tema',
                         icon: Icons.contrast,
