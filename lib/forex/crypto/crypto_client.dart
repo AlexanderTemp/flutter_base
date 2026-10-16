@@ -25,25 +25,27 @@ class CryptoPrice {
     // separador de miles
     final parts = s.split('.');
     parts[0] = parts[0].replaceAllMapped(
-        RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},');
+      RegExp(r'(\d)(?=(\d{3})+$)'),
+      (m) => '${m[1]},',
+    );
     return parts.join('.');
   }
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'symbol': symbol,
-        'usd': usd,
-        'change24h': change24h,
-        'decimals': decimals,
-      };
+    'id': id,
+    'symbol': symbol,
+    'usd': usd,
+    'change24h': change24h,
+    'decimals': decimals,
+  };
 
   factory CryptoPrice.fromMap(Map<String, dynamic> m) => CryptoPrice(
-        id: m['id'] as String,
-        symbol: m['symbol'] as String,
-        usd: (m['usd'] as num).toDouble(),
-        change24h: (m['change24h'] as num).toDouble(),
-        decimals: (m['decimals'] as num).toInt(),
-      );
+    id: m['id'] as String,
+    symbol: m['symbol'] as String,
+    usd: (m['usd'] as num).toDouble(),
+    change24h: (m['change24h'] as num).toDouble(),
+    decimals: (m['decimals'] as num).toInt(),
+  );
 }
 
 class CryptoClient {
@@ -72,11 +74,14 @@ class CryptoClient {
     }
 
     try {
-      final url = 'https://api.coingecko.com/api/v3/simple/price'
-          '?ids=$key&vs_currencies=usd&include_24hr_change=true';
-      final r = await _http.get(Uri.parse(url),
-          headers: {'User-Agent': _ua, 'Accept': 'application/json'}).timeout(
-          const Duration(seconds: 15));
+      final url = Uri.https('api.coingecko.com', '/api/v3/simple/price', {
+        'ids': key,
+        'vs_currencies': 'usd',
+        'include_24hr_change': 'true',
+      });
+      final r = await _http
+          .get(url, headers: {'User-Agent': _ua, 'Accept': 'application/json'})
+          .timeout(const Duration(seconds: 15));
       if (r.statusCode != 200) {
         // 429 u otro: devolvemos lo último conocido en vez de romper.
         if (_last != null && _key == key) return _last!;
@@ -87,16 +92,27 @@ class CryptoClient {
       for (final id in ids) {
         final d = map[id];
         if (d is Map) {
+          final price = d['usd'];
+          final change = d['usd_24h_change'];
+          if (price is! num ||
+              !price.isFinite ||
+              price <= 0 ||
+              change is! num ||
+              !change.isFinite)
+            continue;
           final coin = coinById(id);
-          out.add(CryptoPrice(
-            id: id,
-            symbol: coin?.symbol ?? id.toUpperCase(),
-            decimals: coin?.decimals ?? 2,
-            usd: (d['usd'] as num?)?.toDouble() ?? 0,
-            change24h: (d['usd_24h_change'] as num?)?.toDouble() ?? 0,
-          ));
+          out.add(
+            CryptoPrice(
+              id: id,
+              symbol: coin?.symbol ?? id.toUpperCase(),
+              decimals: coin?.decimals ?? 2,
+              usd: price.toDouble(),
+              change24h: change.toDouble(),
+            ),
+          );
         }
       }
+      if (out.isEmpty) throw const FormatException('Sin cotizaciones válidas.');
       _last = out;
       _key = key;
       _at = now;

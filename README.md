@@ -1,4 +1,39 @@
-# Mi espacio · Aprender Flutter con el diseño de AppFlowy
+# Tradex
+
+Aplicación Flutter de mercados: calendario económico, noticias RSS, precios de
+criptomonedas y cotización USD/BOB. Usa el sistema visual local de AppFlowy.
+
+- Identidad Tradex en azul noche y verde: iconos propios para Android, iOS, macOS y Windows; cabecera con el símbolo de la marca y recarga al deslizar hacia abajo.
+- Un único splash nativo con el logo de Tradex. La app abre directamente y muestra la carga de datos dentro de cada sección, sin una segunda pantalla de espera.
+- Cabecera con icono y nombre de sección. Guía integrada sin conexión, con temas desplegables sobre el calendario, indicadores económicos, cotizaciones, datos guardados y análisis.
+- La guía filtra al escribir por título y explicación (CPI, IPC, NFP, Fed…), sin distinguir mayúsculas ni tildes, y abre los temas encontrados para leerlos directamente.
+- Ajustes permite elegir el contenido del panel y la moneda destacada. Las alertas de alto impacto se activan por separado, a la hora programada o 5/15 minutos antes; no dependen de los filtros del calendario. Con la app cerrada en Android requieren el panel fijo activo y pueden demorarse por el intervalo de consulta o las restricciones del sistema.
+- El aviso de datos anteriores muestra título y fecha; los detalles del fallo y el reintento se abren al tocarlo.
+- Cinta de precios con desplazamiento automático, pausa manual y respeto a la reducción de movimiento.
+- Catálogo de 56 criptomonedas, stablecoins y activos tokenizados; búsqueda y selección persistente en Ajustes.
+- Notificación Android nativa, sin fondo personalizado: primera cotización como título y próximo evento o segunda cotización al contraerla; precios con símbolos en negrita, color solo en la variación, USD/BOB y un bloque de eventos de alto impacto al expandirla. Tradex aparece solo en la cabecera del sistema, la hora aparece una sola vez y la notificación fija incluye «Actualizar» sin abrir la app.
+- Noticias incluye el impacto original del calendario de Forex Factory (alto/rojo, medio/naranja, bajo/amarillo). Los titulares RSS sin clasificación se identifican como «Sin impacto publicado».
+- La notificación fija consulta las fuentes cada dos minutos; las cotizaciones pueden usar caché cuando las fuentes no están disponibles.
+- El calendario guarda su última descarga correcta. Si el servicio falla, «Mostrar datos anteriores» recupera esa copia con su fecha; los reintentos automáticos continúan y una respuesta nueva reemplaza los datos guardados.
+- Boliviano muestra el TCO actual del BCB y su vigencia, con historial diario, movimientos en Bs y porcentaje, últimos 7/30/50 registros, todos los disponibles o selección por fechas. Guarda la última descarga correcta para recuperar el historial si falla la fuente.
+- Ajustes incluye «Acerca de Tradex», versión del proyecto, crédito de desarrollo a Aynicode, fuentes y licencias. La versión se lee del `pubspec.yaml` incluido en los recursos.
+
+Requiere Flutter 3.47+ y Dart 3.12+. Para comprobar: `flutter test`,
+`flutter analyze` y `flutter build apk --debug`.
+
+Estado de revisión: [auditoría estática de Tradex](docs/tradex-audit-2026-10-16.md)
+y [memoria de mejoras para trasladar a main](docs/base-main-handoff.md).
+Las pruebas nuevas de esta entrega están pendientes de ejecución; las comprobaciones
+históricas de la base descritas más abajo no verifican los cambios actuales.
+
+El diseño editable del icono está en `assets/branding/tradex.svg`. Los PNG y el
+ICO se regeneran con `python3 tool/generate_branding.py` (requiere Pillow).
+
+## Documentación histórica de la base visual
+
+Las secciones siguientes describen la versión anterior de tareas y sus comprobaciones de entonces, no las funciones actuales de Tradex.
+
+### Mi espacio · Aprender Flutter con el diseño de AppFlowy
 
 Esta base reutiliza **el sistema visual real de AppFlowy**: el paquete `appflowy_ui`, sus temas claro/oscuro, tokens de color, tipografía, radios, botones, campos y modales. También incluye cuatro iconos SVG del proyecto original. La pantalla adapta esa base a un espacio de tareas con barra lateral, cabecera discreta, superficie plana y filas compactas.
 

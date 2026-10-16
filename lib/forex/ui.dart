@@ -59,16 +59,28 @@ class AfPill extends StatelessWidget {
   }
 }
 
-/// Color del indicador según el impacto, desde el tema.
+/// Clasificación publicada por el calendario de Forex Factory.
+String impactLabel(String impact) => switch (impact) {
+  'high' => 'Alto impacto',
+  'medium' => 'Impacto medio',
+  'low' => 'Bajo impacto',
+  'holiday' => 'Festivo',
+  _ => 'Sin impacto publicado',
+};
+
+/// Rojo/naranja/amarillo, con contraste para cada tema.
 Color impactColor(BuildContext context, String impact) {
   final t = AppFlowyTheme.of(context);
   switch (impact) {
     case 'high':
-      return t.textColorScheme.error;
+      return Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFFFF9BA8) : const Color(0xFFB3261E);
     case 'medium':
-      return t.textColorScheme.warning;
+      return Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFFFFB36B) : const Color(0xFFA84600);
     case 'low':
-      return t.textColorScheme.featured;
+      return Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFFFFD95C) : const Color(0xFF806000);
     default:
       return t.textColorScheme.tertiary;
   }

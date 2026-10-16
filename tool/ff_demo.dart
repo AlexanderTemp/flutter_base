@@ -6,8 +6,8 @@
 //   dart run tool/ff_demo.dart --week   # rojas de toda la semana
 import 'dart:io';
 
-import '../lib/forex/ff_feed_client.dart';
-import '../lib/forex/ff_client.dart' show FfException;
+import 'package:flutter_workspace/forex/ff_feed_client.dart';
+import 'package:flutter_workspace/forex/ff_exception.dart';
 
 Future<void> main(List<String> args) async {
   final week = args.contains('--week');
@@ -19,10 +19,12 @@ Future<void> main(List<String> args) async {
     var red = all.where((e) => e.isHigh).toList();
     if (!week) {
       red = red
-          .where((e) =>
-              e.time.year == today.year &&
-              e.time.month == today.month &&
-              e.time.day == today.day)
+          .where(
+            (e) =>
+                e.time.year == today.year &&
+                e.time.month == today.month &&
+                e.time.day == today.day,
+          )
           .toList();
     }
     red.sort((a, b) => a.time.compareTo(b.time));
@@ -32,17 +34,23 @@ Future<void> main(List<String> args) async {
       return;
     }
 
-    stdout.writeln('\n🔴 Noticias de alto impacto '
-        '(${week ? "semana" : "hoy"}): ${red.length}\n');
+    stdout.writeln(
+      '\n🔴 Noticias de alto impacto '
+      '(${week ? "semana" : "hoy"}): ${red.length}\n',
+    );
     for (final e in red) {
       final hhmm =
           '${e.time.hour.toString().padLeft(2, '0')}:${e.time.minute.toString().padLeft(2, '0')}';
-      stdout.writeln('${_day(e.time)} $hhmm  ${e.currency.padRight(4)} '
-          '${e.name.padRight(34)}  '
-          'fc=${(e.forecast.isEmpty ? "-" : e.forecast).padLeft(7)}  '
-          'prev=${(e.previous.isEmpty ? "-" : e.previous).padLeft(7)}');
+      stdout.writeln(
+        '${_day(e.time)} $hhmm  ${e.currency.padRight(4)} '
+        '${e.name.padRight(34)}  '
+        'fc=${(e.forecast.isEmpty ? "-" : e.forecast).padLeft(7)}  '
+        'prev=${(e.previous.isEmpty ? "-" : e.previous).padLeft(7)}',
+      );
     }
-    stdout.writeln('\nNota: el feed no trae el valor "actual" (requiere proxy, fase 2).');
+    stdout.writeln(
+      '\nNota: el feed no trae el valor "actual" (requiere proxy, fase 2).',
+    );
   } on FfException catch (e) {
     stderr.writeln('Error: ${e.message}');
     exitCode = 1;

@@ -30,11 +30,11 @@
     },
     "info": {
       "$type": "color",
-      "$value": "{Blue.600}"
+      "$value": "{Blue.800}"
     },
     "info-hover": {
       "$type": "color",
-      "$value": "{Blue.700}"
+      "$value": "{Blue.900}"
     },
     "success": {
       "$type": "color",
@@ -46,11 +46,11 @@
     },
     "warning": {
       "$type": "color",
-      "$value": "{Orange.600}"
+      "$value": "{Orange.800}"
     },
     "warning-hover": {
       "$type": "color",
-      "$value": "{Orange.700}"
+      "$value": "{Orange.900}"
     },
     "error": {
       "$type": "color",

@@ -37,6 +37,18 @@ class FfEvent {
   /// El dato ya salió cuando 'actual' deja de estar vacío.
   bool get released => actual.trim().isNotEmpty;
 
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'currency': currency,
+    'impactName': impact,
+    'dateline': time.millisecondsSinceEpoch ~/ 1000,
+    'actual': actual,
+    'forecast': forecast,
+    'previous': previous,
+    'actualBetterWorse': betterWorse,
+  };
+
   /// Desde el feed oficial de FairEconomy (ff_calendar_thisweek.json).
   /// Ese feed trae la programación pero NO el valor 'actual'.
   factory FfEvent.fromFeed(Map<String, dynamic> j) {

@@ -18,21 +18,22 @@ void main() {
     FlutterForegroundTask.initCommunicationPort();
     LiveNotifier.configure();
   }
-  runApp(const ForexApp());
+  runApp(const TradexApp());
 }
 
-class ForexApp extends StatefulWidget {
-  const ForexApp({super.key});
+class TradexApp extends StatefulWidget {
+  const TradexApp({super.key});
 
   @override
-  State<ForexApp> createState() => _ForexAppState();
+  State<TradexApp> createState() => _TradexAppState();
 }
 
-class _ForexAppState extends State<ForexApp> {
+class _TradexAppState extends State<TradexApp> {
   ThemeMode _mode = ThemeMode.system;
 
   void _toggleTheme() {
-    final isDark = _mode == ThemeMode.dark ||
+    final isDark =
+        _mode == ThemeMode.dark ||
         (_mode == ThemeMode.system &&
             WidgetsBinding.instance.platformDispatcher.platformBrightness ==
                 Brightness.dark);
@@ -42,7 +43,7 @@ class _ForexAppState extends State<ForexApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Forex Noticias',
+      title: 'Tradex',
       debugShowCheckedModeBanner: false,
       theme: workspaceTheme(Brightness.light),
       darkTheme: workspaceTheme(Brightness.dark),

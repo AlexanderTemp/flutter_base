@@ -21,6 +21,7 @@ class CryptoController extends ChangeNotifier {
   List<String> _ids = [];
   Timer? _timer;
   bool _cacheLoaded = false;
+  bool _disposed = false;
 
   Future<void> _loadCache() async {
     if (_cacheLoaded) return;
@@ -38,39 +39,59 @@ class CryptoController extends ChangeNotifier {
 
   Future<void> reloadSelection() async {
     _ids = await Prefs.coins();
+    if (_disposed) return;
+    prices = prices.where((p) => _ids.contains(p.id)).toList();
+    notifyListeners();
     await load();
   }
 
   Future<void> load({bool silent = false}) async {
-    await _loadCache();
-    if (_ids.isEmpty) _ids = await Prefs.coins();
+    if (_disposed || loading) return;
+    loading = true;
+    List<String>? ids;
     if (!silent) {
-      loading = true;
       notifyListeners();
     }
     try {
-      final fresh = await _client.fetch(_ids);
-      if (fresh.isNotEmpty) {
+      await _loadCache();
+      final selected = await Prefs.coins();
+      if (_disposed) return;
+      _ids = selected;
+      ids = List<String>.of(selected);
+      prices = prices.where((p) => selected.contains(p.id)).toList();
+      final fresh = await _client.fetch(ids);
+      if (_disposed || !listEquals(ids, _ids)) return;
+      if (fresh.isNotEmpty || ids.isEmpty) {
         prices = fresh;
         error = null;
-        Prefs.setCryptoCache(jsonEncode(fresh.map((e) => e.toMap()).toList()));
+        await Prefs.setCryptoCache(
+          jsonEncode(fresh.map((e) => e.toMap()).toList()),
+        );
       }
     } catch (e) {
       // Mantenemos los últimos precios; solo marcamos error si no hay ninguno.
-      if (prices.isEmpty) error = e.toString();
+      if (!_disposed &&
+          (ids == null || listEquals(ids, _ids)) &&
+          prices.isEmpty) {
+        error = e.toString();
+      }
     } finally {
-      loading = false;
-      notifyListeners();
+      if (!_disposed) {
+        loading = false;
+        notifyListeners();
+        if (ids != null && !listEquals(ids, _ids)) await load(silent: true);
+      }
     }
   }
 
-  void start() {
-    reloadSelection();
+  Future<void> start() {
     _timer = Timer.periodic(refreshEvery, (_) => load(silent: true));
+    return reloadSelection();
   }
 
   @override
   void dispose() {
+    _disposed = true;
     _timer?.cancel();
     _client.close();
     super.dispose();

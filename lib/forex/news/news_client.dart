@@ -61,13 +61,15 @@ class NewsClient {
       for (final item in doc.findAllElements('item')) {
         final title = _text(item, 'title');
         if (title.isEmpty) continue;
-        out.add(NewsItem(
-          title: title,
-          link: _text(item, 'link'),
-          source: source,
-          description: _strip(_text(item, 'description')),
-          published: _parseDate(_text(item, 'pubDate')),
-        ));
+        out.add(
+          NewsItem(
+            title: title,
+            link: _text(item, 'link'),
+            source: source,
+            description: _strip(_text(item, 'description')),
+            published: _parseDate(_text(item, 'pubDate')),
+          ),
+        );
       }
     } catch (_) {
       // XML malformado: devolvemos lo que haya.
@@ -98,21 +100,44 @@ class NewsClient {
 
   static DateTime _rfc822(String s) {
     const months = {
-      'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
-      'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12,
+      'Jan': 1,
+      'Feb': 2,
+      'Mar': 3,
+      'Apr': 4,
+      'May': 5,
+      'Jun': 6,
+      'Jul': 7,
+      'Aug': 8,
+      'Sep': 9,
+      'Oct': 10,
+      'Nov': 11,
+      'Dec': 12,
     };
     final m = RegExp(
-            r'(\d{1,2})\s+(\w{3})\s+(\d{4})\s+(\d{2}):(\d{2})(?::(\d{2}))?')
-        .firstMatch(s);
+      r'(\d{1,2})\s+(\w{3})\s+(\d{4})\s+(\d{2}):(\d{2})(?::(\d{2}))?',
+    ).firstMatch(s);
     if (m == null) throw const FormatException('fecha RSS no reconocida');
+    final zone = s.substring(m.end).trim().toUpperCase();
+    final offset = RegExp(r'^([+-])(\d{2})(\d{2})$').firstMatch(zone);
+    var minutes = 0;
+    if (offset != null) {
+      final hours = int.parse(offset.group(2)!);
+      final remainder = int.parse(offset.group(3)!);
+      if (hours > 23 || remainder > 59)
+        throw const FormatException('Zona horaria no válida');
+      minutes = (hours * 60 + remainder) * (offset.group(1) == '-' ? -1 : 1);
+    } else if (!const {'GMT', 'UTC', 'UT', 'Z'}.contains(zone)) {
+      throw const FormatException('Zona horaria RSS no reconocida');
+    }
     return DateTime.utc(
       int.parse(m.group(3)!),
-      months[m.group(2)] ?? 1,
+      months[m.group(2)] ??
+          (throw const FormatException('Mes RSS no reconocido')),
       int.parse(m.group(1)!),
       int.parse(m.group(4)!),
       int.parse(m.group(5)!),
       int.parse(m.group(6) ?? '0'),
-    ).toLocal();
+    ).subtract(Duration(minutes: minutes)).toLocal();
   }
 
   void close() => _http.close();
