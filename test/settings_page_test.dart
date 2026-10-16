@@ -55,6 +55,24 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('acerca de muestra versión, desarrollo y acceso a licencias',
+      (tester) async {
+    await openApp(tester);
+    await tapKey(tester, 'bottom-settings');
+    await tapKey(tester, 'settings-about');
+    expect(find.text('Desarrollo'), findsOneWidget);
+    expect(find.textContaining('Aynicode'), findsOneWidget);
+    expect(
+        find.textContaining(RegExp(r'Versión \d+\.\d+\.\d+')), findsOneWidget);
+    final licenses = find.text('Ver licencias');
+    await tester.ensureVisible(licenses);
+    await tester.pumpAndSettle();
+    await tester.tap(licenses);
+    await tester.pumpAndSettle();
+    expect(find.byType(LicensePage), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('los ajustes cambian tema, filas, visibilidad y nombre',
       (tester) async {
     await openApp(tester);

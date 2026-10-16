@@ -19,4 +19,11 @@ El paquete se incluye como fuente local para que la app no dependa de la carpeta
 
 Estas adaptaciones se verifican en las pruebas de accesibilidad y ciclo de vida del proyecto raíz. Deben conservarse o revisarse al actualizar el paquete desde el original.
 
+## Contraste semántico reutilizado en la base (2026-10-16)
+
+- En claro, texto informativo `Blue.800/900` y advertencias `Orange.800/900`.
+- En oscuro, texto de éxito `Green.400/300`, advertencias `Orange.300/200` y error `Red.300/200`; fondos informativos `Blue.1000/900` y de advertencia `Orange.1000/900`.
+- Se trasladaron juntos los dos JSON semánticos de origen y `semantic.dart` desde `feature/ff-watch` (`06b0135`), sin cambiar los colores primitivos.
+- Se añadieron regresiones de contraste en `test/base_improvements_test.dart`. Su ejecución y la revisión visual de los cambios actuales están pendientes; las comprobaciones históricas no se aplican automáticamente a este traspaso.
+
 La pantalla del espacio de trabajo y su Cubit son código educativo de esta base; no son la aplicación completa ni su editor. Esta entrega usa AGPLv3: al redistribuir un derivado comercial, respeta sus avisos y obligaciones de código fuente.

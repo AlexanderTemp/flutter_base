@@ -103,7 +103,10 @@ class WorkspaceToggle extends StatelessWidget {
           ),
           const SizedBox(width: 16),
           AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
+            duration: MediaQuery.of(context).disableAnimations ||
+                    MediaQuery.of(context).accessibleNavigation
+                ? Duration.zero
+                : const Duration(milliseconds: 150),
             width: 40,
             height: 24,
             padding: const EdgeInsets.all(3),

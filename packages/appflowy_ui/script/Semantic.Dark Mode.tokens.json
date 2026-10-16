@@ -38,27 +38,27 @@
     },
     "success": {
       "$type": "color",
-      "$value": "{Green.600}"
+      "$value": "{Green.400}"
     },
     "success-hover": {
       "$type": "color",
-      "$value": "{Green.500}"
+      "$value": "{Green.300}"
     },
     "warning": {
       "$type": "color",
-      "$value": "{Orange.600}"
+      "$value": "{Orange.300}"
     },
     "warning-hover": {
       "$type": "color",
-      "$value": "{Orange.500}"
+      "$value": "{Orange.200}"
     },
     "error": {
       "$type": "color",
-      "$value": "{Red.500}"
+      "$value": "{Red.300}"
     },
     "error-hover": {
       "$type": "color",
-      "$value": "{Red.400}"
+      "$value": "{Red.200}"
     },
     "featured": {
       "$type": "color",
@@ -282,11 +282,11 @@
     },
     "info-light": {
       "$type": "color",
-      "$value": "{Blue.200}"
+      "$value": "{Blue.1000}"
     },
     "info-light-hover": {
       "$type": "color",
-      "$value": "{Blue.100}"
+      "$value": "{Blue.900}"
     },
     "info-thick": {
       "$type": "color",
@@ -306,11 +306,11 @@
     },
     "warning-light": {
       "$type": "color",
-      "$value": "{Orange.200}"
+      "$value": "{Orange.1000}"
     },
     "warning-light-hover": {
       "$type": "color",
-      "$value": "{Orange.100}"
+      "$value": "{Orange.900}"
     },
     "error-light": {
       "$type": "color",

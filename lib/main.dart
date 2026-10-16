@@ -2,6 +2,7 @@ import 'package:appflowy_ui/appflowy_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'app_info.dart';
 import 'design_system/theme.dart';
 import 'auth/application/auth_cubit.dart';
 import 'settings/application/settings_cubit.dart';
@@ -22,7 +23,7 @@ class WorkspaceApp extends StatelessWidget {
         ],
         child: BlocBuilder<SettingsCubit, SettingsState>(
           builder: (context, settings) => MaterialApp(
-            title: 'Mi espacio',
+            title: AppInfo.name,
             debugShowCheckedModeBanner: false,
             theme: workspaceTheme(Brightness.light),
             darkTheme: workspaceTheme(Brightness.dark),

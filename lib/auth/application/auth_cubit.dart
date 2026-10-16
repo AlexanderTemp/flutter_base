@@ -38,7 +38,7 @@ class AuthCubit extends Cubit<AuthState> {
   final AuthRepository repository;
 
   Future<bool> signIn(String email, String password) async {
-    if (state.busy || state.user != null) return false;
+    if (isClosed || state.busy || state.user != null) return false;
     final cleanEmail = email.trim();
     if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(cleanEmail) ||
         password.isEmpty) {
@@ -64,7 +64,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> signOut() async {
-    if (state.busy || state.user == null) return;
+    if (isClosed || state.busy || state.user == null) return;
     final user = state.user;
     emit(AuthState(user: user, busy: true));
     try {

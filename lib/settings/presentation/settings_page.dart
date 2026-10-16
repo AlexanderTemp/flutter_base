@@ -2,6 +2,7 @@ import 'package:appflowy_ui/appflowy_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../app_info.dart';
 import '../../design_system/workspace_controls.dart';
 import '../../auth/application/auth_cubit.dart';
 import '../../auth/presentation/sign_in_page.dart';
@@ -35,6 +36,7 @@ class _SettingsPageState extends State<SettingsPage> {
   late final TextEditingController _profileName;
   late final TextEditingController _profileBio;
   late int _avatarColor;
+  String _version = '…';
 
   @override
   void initState() {
@@ -43,6 +45,12 @@ class _SettingsPageState extends State<SettingsPage> {
     _profileName = TextEditingController(text: settings.profileName);
     _profileBio = TextEditingController(text: settings.profileBio);
     _avatarColor = settings.avatarColor;
+    _loadVersion();
+  }
+
+  Future<void> _loadVersion() async {
+    final version = await AppInfo.loadVersion();
+    if (mounted) setState(() => _version = version);
   }
 
   @override
@@ -118,7 +126,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ]),
             const SizedBox(height: 28),
             Text(
-                'Base Flutter · 1.0.0+1\nDatos y perfil locales de esta sesión',
+                '${AppInfo.name} · $_version\nDatos y perfil locales de esta sesión',
                 textAlign: TextAlign.center,
                 style: theme.textStyle.caption
                     .standard(color: theme.textColorScheme.secondary)),
@@ -207,11 +215,15 @@ class _SettingsPageState extends State<SettingsPage> {
                         'La ampliación del sistema operativo también se respeta.'),
               ],
             SettingsSection.about => [
-                const _SettingsHeading(
-                    title: 'Base Flutter · Fase 2',
+                _SettingsHeading(
+                    title: AppInfo.name,
                     description:
-                        'Versión 1.0.0+1 · Proyecto educativo con Flutter, '
+                        'Versión $_version · Proyecto educativo con Flutter, '
                         'Cubit y el sistema visual de AppFlowy.'),
+                const _SettingsHeading(
+                    title: 'Desarrollo',
+                    description:
+                        '${AppInfo.developer} · Base para aplicaciones móviles y de escritorio.'),
                 const SizedBox(height: 24),
                 const _SettingsHeading(
                     title: 'Cómo está construido',
@@ -226,6 +238,20 @@ class _SettingsPageState extends State<SettingsPage> {
                         'Componentes e iconos de AppFlowy bajo AGPLv3. '
                         'Consulta THIRD_PARTY.md y LICENSE en el proyecto.'),
                 const SizedBox(height: 24),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: AFOutlinedTextButton.normal(
+                    text: 'Ver licencias',
+                    onTap: () => showLicensePage(
+                      context: context,
+                      applicationName: AppInfo.name,
+                      applicationVersion: _version,
+                      applicationLegalese:
+                          'Desarrollado por ${AppInfo.developer} · Componentes AppFlowy bajo AGPLv3',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Align(
                   alignment: Alignment.centerLeft,
                   child: AFOutlinedTextButton.normal(

@@ -159,10 +159,16 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
                     index:
                         _destination == WorkspaceDestination.settings ? 1 : 0,
                     children: [
-                      _content(context, state, wide, settings),
-                      SettingsPage(
-                          active:
-                              _destination == WorkspaceDestination.settings),
+                      TickerMode(
+                        enabled: _destination != WorkspaceDestination.settings,
+                        child: _content(context, state, wide, settings),
+                      ),
+                      TickerMode(
+                        enabled: _destination == WorkspaceDestination.settings,
+                        child: SettingsPage(
+                            active:
+                                _destination == WorkspaceDestination.settings),
+                      ),
                     ],
                   ),
                 ),
@@ -188,7 +194,7 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
           _filter == TaskFilter.completed;
       return matchesFilter &&
           visible &&
-          task.title.toLowerCase().contains(_query);
+          _normalizeSearch(task.title).contains(_query);
     }).toList();
 
     return Align(
@@ -265,10 +271,18 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
                   hintText: 'Buscar en esta página…',
                   size: AFTextFieldSize.m,
                   onChanged: (value) =>
-                      setState(() => _query = value.trim().toLowerCase()),
-                  suffixIconBuilder: (_, __) => const Padding(
-                      padding: EdgeInsets.all(8),
-                      child: WorkspaceIcon('search_icon', size: 18)),
+                      setState(() => _query = _normalizeSearch(value.trim())),
+                  suffixIconBuilder: (_, __) => _searchController.text.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: WorkspaceIcon('search_icon', size: 18))
+                      : WorkspaceIconButton(
+                          label: 'Limpiar búsqueda',
+                          icon: Icons.close,
+                          onTap: () => setState(() {
+                                _searchController.clear();
+                                _query = '';
+                              })),
                 )),
             const SizedBox(height: 16),
             DecoratedBox(
@@ -315,3 +329,12 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
     );
   }
 }
+
+String _normalizeSearch(String value) => value
+    .toLowerCase()
+    .replaceAll('á', 'a')
+    .replaceAll('é', 'e')
+    .replaceAll('í', 'i')
+    .replaceAll('ó', 'o')
+    .replaceAll('ú', 'u')
+    .replaceAll('ü', 'u');

@@ -2,11 +2,25 @@
 
 Esta base reutiliza **el sistema visual real de AppFlowy**: el paquete `appflowy_ui`, sus temas claro/oscuro, tokens de color, tipografía, radios, botones, campos y modales. También incluye cuatro iconos SVG del proyecto original. La pantalla adapta esa base a un espacio de tareas con barra lateral, cabecera discreta, superficie plana y filas compactas.
 
+## Base para tu próximo proyecto
+
+`main` conserva una base Flutter general. Incluye mejoras reutilizadas del trabajo
+de producto: contraste claro/oscuro, búsqueda sin tildes con limpieza, reducción de
+movimiento, pausa de animaciones en páginas ocultas, información de versión y
+desarrollo, licencias y configuración Android más contenida en RAM.
+
+La identidad Flutter se edita en `lib/app_info.dart`; la versión se toma de
+`pubspec.yaml`. Consulta **[qué se trasladó y cómo preparar tu fork](docs/base-handoff.md)**
+para nombres nativos, iconos, firma, datos y autenticación.
+
+**Estado actual:** cambios revisados por inspección y comprobaciones ligeras;
+pruebas nuevas y compilación pendientes de autorización. No se añadieron dependencias.
+
 ## Auditoría y correcciones
 
 Se corrigieron los cinco hallazgos de la auditoría: conservación del borrador de perfil al redimensionar, zonas táctiles mínimas, contraste, respuesta tardía del acceso y cambio de controlador del campo. Las adaptaciones del paquete original están registradas en `THIRD_PARTY.md`.
 
-**Comprobado:** análisis estático sin incidencias, 22 pruebas aprobadas, guías Flutter de áreas táctiles/etiquetas/contraste en los recorridos probados claro/oscuro y compilaciones debug Android y Linux. La ejecución en un dispositivo Android sigue pendiente. Consulta [la auditoría y sus correcciones](docs/audit-fixes.md).
+**Comprobación histórica de la base anterior:** análisis estático sin incidencias, 22 pruebas aprobadas, guías Flutter de áreas táctiles/etiquetas/contraste en los recorridos probados claro/oscuro y compilaciones debug Android y Linux. Estos resultados no verifican los cambios actuales. La ejecución en un dispositivo Android sigue pendiente. Consulta [la auditoría y sus correcciones](docs/audit-fixes.md).
 
 ## Fase 2: navegación y ajustes propios
 

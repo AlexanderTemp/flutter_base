@@ -21,6 +21,16 @@ class ControlledAuthRepository implements AuthRepository {
 }
 
 void main() {
+  test('un Cubit cerrado rechaza nuevas operaciones sin llamar al servicio',
+      () async {
+    final repository = ControlledAuthRepository();
+    final cubit = AuthCubit(repository);
+    await cubit.close();
+    expect(await cubit.signIn('demo@ejemplo.com', 'demo'), isFalse);
+    await cubit.signOut();
+    expect(repository.calls, 0);
+  });
+
   test('valida, bloquea duplicados y conserva la sesión si falla salir',
       () async {
     final repository = ControlledAuthRepository();
