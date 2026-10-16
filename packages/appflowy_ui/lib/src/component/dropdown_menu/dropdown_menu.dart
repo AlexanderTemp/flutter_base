@@ -120,7 +120,7 @@ class _AFDropDownMenuState<T extends AFDropDownMenuMixin>
                 }
               },
               child: Container(
-                constraints: const BoxConstraints.tightFor(height: 32),
+                constraints: const BoxConstraints(minHeight: kMinInteractiveDimension),
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: widget.isDisabled

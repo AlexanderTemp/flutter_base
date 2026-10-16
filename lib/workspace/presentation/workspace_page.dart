@@ -2,6 +2,9 @@ import 'package:appflowy_ui/appflowy_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../app_info.dart';
+import '../../design_system/app_logo.dart';
+import '../../design_system/components_page.dart';
 import '../../design_system/workspace_icon.dart';
 import '../../settings/application/settings_cubit.dart';
 import '../../settings/presentation/settings_page.dart';
@@ -140,27 +143,45 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
                           label: 'Abrir navegación',
                           icon: Icons.menu,
                           onTap: () => _scaffoldKey.currentState!.openDrawer()),
-                    const WorkspaceIcon('type_page', size: 18),
+                    const AppLogo(),
                     const SizedBox(width: 8),
                     Expanded(
-                        child: Text(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(AppInfo.name, overflow: TextOverflow.ellipsis,
+                              style: theme.textStyle.body.enhanced(color: theme.textColorScheme.primary)),
+                            Text(
                             '${settings.workspaceName} / ${_destination.label}',
                             overflow: TextOverflow.ellipsis,
                             style: theme.textStyle.caption.standard(
-                                color: theme.textColorScheme.secondary))),
-                    WorkspaceIconButton(
-                        label: 'Cambiar tema',
-                        icon: Icons.contrast,
-                        onTap: widget.onToggleTheme),
+                                color: theme.textColorScheme.secondary)),
+                          ],
+                        )),
+                    IconButton(
+                      tooltip: 'Cambiar tema',
+                      icon: const Icon(Icons.contrast),
+                      onPressed: widget.onToggleTheme,
+                    ),
+                    IconButton(
+                      key: const ValueKey('header-settings'),
+                      tooltip: 'Ajustes',
+                      icon: const Icon(Icons.settings_outlined),
+                      onPressed: () => _navigate(WorkspaceDestination.settings),
+                    ),
                   ]),
                 ),
                 Expanded(
                   child: IndexedStack(
-                    index:
-                        _destination == WorkspaceDestination.settings ? 1 : 0,
+                    index: switch (_destination) {
+                      WorkspaceDestination.settings => 1,
+                      WorkspaceDestination.components => 2,
+                      _ => 0,
+                    },
                     children: [
                       TickerMode(
-                        enabled: _destination != WorkspaceDestination.settings,
+                        enabled: _destination == WorkspaceDestination.tasks ||
+                            _destination == WorkspaceDestination.search,
                         child: _content(context, state, wide, settings),
                       ),
                       TickerMode(
@@ -168,6 +189,10 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
                         child: SettingsPage(
                             active:
                                 _destination == WorkspaceDestination.settings),
+                      ),
+                      TickerMode(
+                        enabled: _destination == WorkspaceDestination.components,
+                        child: const ComponentsPage(),
                       ),
                     ],
                   ),

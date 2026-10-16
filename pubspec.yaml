@@ -1,5 +1,5 @@
 name: flutter_workspace
-description: Base educativa de un espacio de trabajo para móvil y escritorio.
+description: Flutter Base de AyniCode — plantilla Flutter con componentes y diseños adaptables.
 publish_to: none
 version: 1.0.0+1
 
@@ -18,10 +18,44 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.3
   flutter_lints: ^5.0.0
+  flutter_native_splash: ^2.4.4
 
 flutter:
   uses-material-design: true
   assets:
     - assets/icons/
+    - assets/branding/logo.png
     - pubspec.yaml
+
+# Marca: reemplazar los PNG de assets/branding/ y regenerar con
+#   dart run flutter_launcher_icons
+#   dart run flutter_native_splash:create
+# Las fuentes no se empaquetan; solo logo.png se declara como asset.
+flutter_launcher_icons:
+  image_path: assets/branding/icon.png
+  android: true
+  adaptive_icon_background: assets/branding/icon_background.png
+  adaptive_icon_foreground: assets/branding/icon_foreground.png
+  adaptive_icon_monochrome: assets/branding/icon_foreground.png
+  ios: true
+  remove_alpha_ios: true
+  macos:
+    generate: true
+  windows:
+    generate: true
+    icon_size: 256
+
+# Fondos iguales a backgroundColorScheme.primary (claro/oscuro) para una transición sin saltos.
+flutter_native_splash:
+  color: "#FFFFFF"
+  color_dark: "#21232A"
+  image: assets/branding/splash.png
+  android_12:
+    image: assets/branding/splash_android12.png
+    icon_background_color: "#0090E6"
+    icon_background_color_dark: "#0090E6"
+    color: "#FFFFFF"
+    color_dark: "#21232A"
+  web: false

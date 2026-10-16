@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../app_info.dart';
+import '../../design_system/surfaces.dart';
 import '../../design_system/workspace_controls.dart';
 import '../../auth/application/auth_cubit.dart';
 import '../../auth/presentation/sign_in_page.dart';
@@ -126,7 +127,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ]),
             const SizedBox(height: 28),
             Text(
-                '${AppInfo.name} · $_version\nDatos y perfil locales de esta sesión',
+                '${AppInfo.name} · $_version · ${AppInfo.environment.name}\nDatos y perfil locales de esta sesión',
                 textAlign: TextAlign.center,
                 style: theme.textStyle.caption
                     .standard(color: theme.textColorScheme.secondary)),
@@ -224,6 +225,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     title: 'Desarrollo',
                     description:
                         '${AppInfo.developer} · Base para aplicaciones móviles y de escritorio.'),
+                Wrap(spacing: 8, runSpacing: 8, children: [
+                  AfPill(text: AppInfo.environment.name),
+                  const AfPill(text: AppInfo.buildMode),
+                ]),
                 const SizedBox(height: 24),
                 const _SettingsHeading(
                     title: 'Cómo está construido',

@@ -1,6 +1,7 @@
 import 'package:appflowy_ui/appflowy_ui.dart';
 import 'package:flutter/material.dart';
 
+import '../../design_system/surfaces.dart';
 import '../application/settings_cubit.dart';
 
 class ProfileAvatar extends StatelessWidget {
@@ -97,11 +98,8 @@ class SettingsGroup extends StatelessWidget {
               child: Text(title.toUpperCase(),
                   style: theme.textStyle.caption
                       .enhanced(color: theme.textColorScheme.secondary))),
-          DecoratedBox(
-              decoration: BoxDecoration(
-                  color: theme.surfaceColorScheme.primary,
-                  border: Border.all(color: theme.borderColorScheme.primary),
-                  borderRadius: BorderRadius.circular(theme.borderRadius.l)),
+          AfCard(
+              padding: EdgeInsets.zero,
               child: Column(children: [
                 for (var i = 0; i < children.length; i++) ...[
                   if (i > 0)

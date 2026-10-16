@@ -90,7 +90,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     final repository = _RetryAuthRepository();
     await tester.pumpWidget(WorkspaceApp(authRepository: repository));
-    await tap(tester, 'bottom-settings');
+    await tap(tester, 'header-settings');
     await tap(tester, 'account-entry');
     await tester.enterText(find.byType(TextField).first, 'demo@ejemplo.com');
     await tester.enterText(find.byType(TextField).last, 'ficticia');
@@ -113,7 +113,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(WorkspaceApp(authRepository: repository));
-    await tester.tap(find.byKey(const ValueKey('bottom-settings')));
+    await tester.tap(find.byKey(const ValueKey('header-settings')));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.byKey(const ValueKey('account-entry')));
     await tester.pumpAndSettle();
@@ -143,7 +143,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const WorkspaceApp());
-    await tap(tester, 'bottom-settings');
+    await tap(tester, 'header-settings');
     await tap(tester, 'settings-profile');
     final fields = find.descendant(
         of: find.byType(ProfileEditor), matching: find.byType(TextField));
@@ -194,7 +194,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const WorkspaceApp());
-    await tap(tester, 'bottom-settings');
+    await tap(tester, 'header-settings');
     await tap(tester, 'account-entry');
     await tester.tap(find.byTooltip('Cerrar inicio de sesión'));
     await tester.pumpAndSettle();

@@ -1,4 +1,4 @@
-# Mi espacio · Aprender Flutter con el diseño de AppFlowy
+# Flutter Base · Plantilla Flutter con el diseño de AppFlowy
 
 Esta base reutiliza **el sistema visual real de AppFlowy**: el paquete `appflowy_ui`, sus temas claro/oscuro, tokens de color, tipografía, radios, botones, campos y modales. También incluye cuatro iconos SVG del proyecto original. La pantalla adapta esa base a un espacio de tareas con barra lateral, cabecera discreta, superficie plana y filas compactas.
 
@@ -9,12 +9,27 @@ de producto: contraste claro/oscuro, búsqueda sin tildes con limpieza, reducci�
 movimiento, pausa de animaciones en páginas ocultas, información de versión y
 desarrollo, licencias y configuración Android más contenida en RAM.
 
-La identidad Flutter se edita en `lib/app_info.dart`; la versión se toma de
-`pubspec.yaml`. Consulta **[qué se trasladó y cómo preparar tu fork](docs/base-handoff.md)**
+La identidad Flutter, el logo y el crédito **AyniCode** se editan en `lib/app_info.dart`.
+Icono de app y splash nativo (claro/oscuro, Android 12+) salen de los PNG de
+`assets/branding/`; tras reemplazarlos se regeneran con
+`dart run flutter_launcher_icons` y `dart run flutter_native_splash:create`.
+En Android se muestra la versión del APK instalado; en otras plataformas se usa
+`pubspec.yaml`. El entorno se elige con `--dart-define=APP_ENV=development|test|production`
+(por defecto `development`, también en release). Una insignia flotante en la zona
+inferior lo identifica sin ocupar espacio ni bloquear pulsaciones: **Modo desarrollo**,
+**Versión de pruebas · puede contener errores** o ninguna en producción.
+Consulta **[qué se trasladó y cómo preparar tu fork](docs/base-handoff.md)**
 para nombres nativos, iconos, firma, datos y autenticación.
 
 **Estado actual:** cambios revisados por inspección y comprobaciones ligeras;
-pruebas nuevas y compilación pendientes de autorización. No se añadieron dependencias.
+pruebas nuevas y compilación pendientes de autorización. Solo se añadieron las
+herramientas de desarrollo `flutter_launcher_icons` y `flutter_native_splash`
+(no forman parte del binario).
+
+Las tarjetas `AfCard` y etiquetas `AfPill` de Tradex se reutilizan desde
+`lib/design_system/surfaces.dart` en los grupos de Ajustes y los indicadores de
+entorno. La cabecera usa los mismos controles `IconButton` para tema y ajustes;
+la procedencia y adaptaciones están registradas en la guía del fork.
 
 ## Auditoría y correcciones
 
@@ -34,7 +49,7 @@ El inicio de sesión tiene formulario, validación, carga, errores, reintento y 
 
 [Perfil en escritorio](docs/profile-settings-desktop.png) · [Inicio de sesión](docs/sign-in-mobile.png) · [Arquitectura del perfil y acceso](docs/profile-auth.md).
 
-La base ahora tiene **Tareas, Buscar, Crear y Ajustes en la barra inferior móvil**, navegación lateral en escritorio y configuración por categorías. El drawer móvil conserva los filtros de tareas. Tema, tamaño de texto, filas compactas, visibilidad de completadas y nombre del espacio modifican realmente la interfaz.
+La base tiene **Tareas, Buscar y Crear en la barra inferior móvil**, con **Ajustes en la cabecera junto al cambio de tema**, navegación lateral en escritorio y configuración por categorías. El drawer móvil conserva los filtros de tareas. Tema, tamaño de texto, filas compactas, visibilidad de completadas y nombre del espacio modifican realmente la interfaz. Los controles Material y las barras del sistema siguen el tema elegido en la app.
 
 Los nuevos controles `WorkspaceChoice` y `WorkspaceToggle` están escritos en `lib/design_system/workspace_controls.dart`, componiendo `AFBaseButton`, tokens y piezas Flutter. `SettingsCubit` conserva las preferencias de sesión por encima de las pantallas; `WorkspaceCubit` conserva las tareas. No se añadieron dependencias.
 

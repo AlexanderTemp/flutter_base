@@ -25,7 +25,7 @@ void main() {
         }
 
         await check();
-        await tester.tap(find.byKey(const ValueKey('bottom-settings')));
+        await tester.tap(find.byKey(const ValueKey('header-settings')));
         await tester.pumpAndSettle();
         await check();
         await tester

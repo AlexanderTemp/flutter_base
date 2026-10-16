@@ -1,6 +1,7 @@
 import 'package:appflowy_ui/appflowy_ui.dart';
 import 'package:flutter/material.dart';
 
+import '../../design_system/app_logo.dart';
 import '../../design_system/workspace_icon.dart';
 import '../../design_system/workspace_controls.dart';
 import '../application/workspace_cubit.dart';
@@ -18,6 +19,7 @@ enum TaskFilter {
 enum WorkspaceDestination {
   tasks('Tareas', Icons.home_outlined),
   search('Buscar', Icons.search),
+  components('Componentes', Icons.widgets_outlined),
   settings('Ajustes', Icons.settings_outlined);
 
   const WorkspaceDestination(this.label, this.icon);
@@ -43,7 +45,7 @@ class WorkspaceBottomNavigation extends StatelessWidget {
     Widget item(WorkspaceDestination value) => Expanded(
           child: WorkspaceChoice(
             key: ValueKey('bottom-${value.name}'),
-            label: value.label,
+            label: value == WorkspaceDestination.components ? 'Diseño' : value.label,
             icon: value.icon,
             selected: destination == value,
             vertical: true,
@@ -62,6 +64,7 @@ class WorkspaceBottomNavigation extends StatelessWidget {
           child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             item(WorkspaceDestination.tasks),
             item(WorkspaceDestination.search),
+            item(WorkspaceDestination.components),
             Expanded(
               child: WorkspaceChoice(
                 key: const ValueKey('bottom-create'),
@@ -72,7 +75,6 @@ class WorkspaceBottomNavigation extends StatelessWidget {
                 onTap: onCreate,
               ),
             ),
-            item(WorkspaceDestination.settings),
           ]),
         ),
       ),
@@ -141,18 +143,7 @@ class WorkspaceSidebar extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(20),
               child: Row(children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: theme.fillColorScheme.themeThick,
-                    borderRadius: BorderRadius.circular(theme.borderRadius.m),
-                  ),
-                  child: Text(workspaceName.characters.first.toUpperCase(),
-                      style: theme.textStyle.body
-                          .enhanced(color: theme.textColorScheme.onFill)),
-                ),
+                const AppLogo(),
                 const SizedBox(width: 10),
                 Expanded(
                     child: Text(workspaceName,

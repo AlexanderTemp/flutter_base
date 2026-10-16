@@ -26,4 +26,10 @@ Estas adaptaciones se verifican en las pruebas de accesibilidad y ciclo de vida 
 - Se trasladaron juntos los dos JSON semánticos de origen y `semantic.dart` desde `feature/ff-watch` (`06b0135`), sin cambiar los colores primitivos.
 - Se añadieron regresiones de contraste en `test/base_improvements_test.dart`. Su ejecución y la revisión visual de los cambios actuales están pendientes; las comprobaciones históricas no se aplican automáticamente a este traspaso.
 
+## Interacción de botones compartidos (2026-10-16)
+
+- `AFBaseButton` no solicita foco cuando está deshabilitado o no tiene acción, comunica su estado habilitado mediante semántica y hace pulsable toda su superficie, incluido el padding.
+- El contenido de `AFBaseButton` se centra dentro del padding, manteniendo el tamaño intrínseco. La altura mínima táctil o una altura adicional del padre ya no deja las etiquetas pegadas arriba. La regresión cubre botones rellenos, de contorno y fantasma en todos sus tamaños y con texto ampliado.
+- El cambio se aplica a botones rellenos, de contorno, fantasma y sus consumidores. La regresión de interacción y teclado está en `test/button_theme_test.dart`, pendiente de ejecución autorizada.
+
 La pantalla del espacio de trabajo y su Cubit son código educativo de esta base; no son la aplicación completa ni su editor. Esta entrega usa AGPLv3: al redistribuir un derivado comercial, respeta sus avisos y obligaciones de código fuente.

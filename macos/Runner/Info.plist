@@ -13,9 +13,9 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Mi espacio</string>
+	<string>Flutter Base</string>
 	<key>CFBundleDisplayName</key>
-	<string>Mi espacio</string>
+	<string>Flutter Base</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

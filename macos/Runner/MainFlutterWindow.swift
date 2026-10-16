@@ -7,7 +7,7 @@ class MainFlutterWindow: NSWindow {
     let windowFrame = self.frame
     self.contentViewController = flutterViewController
     self.setFrame(windowFrame, display: true)
-    self.title = "Mi espacio"
+    self.title = "Flutter Base"
 
     RegisterGeneratedPlugins(registry: flutterViewController)
 

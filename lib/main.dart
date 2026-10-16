@@ -1,8 +1,10 @@
 import 'package:appflowy_ui/appflowy_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'app_info.dart';
+import 'design_system/environment_badge.dart';
 import 'design_system/theme.dart';
 import 'auth/application/auth_cubit.dart';
 import 'settings/application/settings_cubit.dart';
@@ -31,6 +33,8 @@ class WorkspaceApp extends StatelessWidget {
             builder: (context, child) {
               final builder = AppFlowyDefaultTheme();
               final media = MediaQuery.of(context);
+              final theme = Theme.of(context);
+              final dark = theme.brightness == Brightness.dark;
               return AppFlowyTheme(
                 data: Theme.of(context).brightness == Brightness.dark
                     ? builder.dark()
@@ -41,7 +45,29 @@ class WorkspaceApp extends StatelessWidget {
                     textScaler:
                         _ScaledTextScaler(media.textScaler, settings.textScale),
                   ),
-                  child: child!,
+                  child: AnnotatedRegion<SystemUiOverlayStyle>(
+                    value: SystemUiOverlayStyle(
+                      statusBarColor: Colors.transparent,
+                      statusBarIconBrightness:
+                          dark ? Brightness.light : Brightness.dark,
+                      statusBarBrightness: theme.brightness,
+                      systemNavigationBarColor: theme.scaffoldBackgroundColor,
+                      systemNavigationBarIconBrightness:
+                          dark ? Brightness.light : Brightness.dark,
+                    ),
+                    child: AppInfo.environment.badge == null
+                        ? child!
+                        : Stack(fit: StackFit.expand, children: [
+                            child!,
+                            Positioned(
+                              left: 0,
+                              right: 0,
+                              bottom: media.viewPadding.bottom + 4,
+                              child: EnvironmentBadge(
+                                  environment: AppInfo.environment),
+                            ),
+                          ]),
+                  ),
                 ),
               );
             },

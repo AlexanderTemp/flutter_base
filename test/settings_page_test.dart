@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_workspace/app_info.dart';
+import 'package:flutter_workspace/design_system/environment_badge.dart';
+import 'package:flutter_workspace/design_system/surfaces.dart';
 import 'package:flutter_workspace/main.dart';
 import 'package:flutter_workspace/settings/presentation/settings_page.dart';
 import 'package:flutter_workspace/workspace/presentation/workspace_widgets.dart';
@@ -38,7 +41,7 @@ void main() {
     await tester.enterText(find.byType(TextField), 'estado');
     await tester.pumpAndSettle();
     expect(find.byType(WorkspaceTaskRow), findsOneWidget);
-    await tapKey(tester, 'bottom-settings');
+    await tapKey(tester, 'header-settings');
     expect(find.byType(SettingsPage), findsOneWidget);
     await tapKey(tester, 'bottom-create');
     await tester.enterText(find.byType(TextField).last, 'Segunda fase');
@@ -58,10 +61,15 @@ void main() {
   testWidgets('acerca de muestra versión, desarrollo y acceso a licencias',
       (tester) async {
     await openApp(tester);
-    await tapKey(tester, 'bottom-settings');
+    expect(
+        find.byType(EnvironmentBadge),
+        AppInfo.environment.badge == null ? findsNothing : findsOneWidget);
+    await tapKey(tester, 'header-settings');
     await tapKey(tester, 'settings-about');
     expect(find.text('Desarrollo'), findsOneWidget);
-    expect(find.textContaining('Aynicode'), findsOneWidget);
+    expect(find.textContaining('AyniCode'), findsOneWidget);
+    expect(find.widgetWithText(AfPill, AppInfo.environment.name), findsOneWidget);
+    expect(find.widgetWithText(AfPill, AppInfo.buildMode), findsOneWidget);
     expect(
         find.textContaining(RegExp(r'Versión \d+\.\d+\.\d+')), findsOneWidget);
     final licenses = find.text('Ver licencias');
@@ -70,13 +78,16 @@ void main() {
     await tester.tap(licenses);
     await tester.pumpAndSettle();
     expect(find.byType(LicensePage), findsOneWidget);
+    expect(
+        find.byType(EnvironmentBadge),
+        AppInfo.environment.badge == null ? findsNothing : findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('los ajustes cambian tema, filas, visibilidad y nombre',
       (tester) async {
     await openApp(tester);
-    await tapKey(tester, 'bottom-settings');
+    await tapKey(tester, 'header-settings');
     await tapKey(tester, 'settings-appearance');
     await tapKey(tester, 'theme-dark');
     expect(Theme.of(tester.element(find.byType(Scaffold))).brightness,
@@ -95,7 +106,7 @@ void main() {
     await tapKey(tester, 'nav-completed');
     expect(find.byType(WorkspaceTaskRow), findsOneWidget);
 
-    await tapKey(tester, 'bottom-settings');
+    await tapKey(tester, 'header-settings');
     await tapKey(tester, 'settings-back');
     await tapKey(tester, 'settings-workspace');
     await tester.enterText(find.byType(TextField), '   ');
@@ -130,7 +141,7 @@ void main() {
   testWidgets('ajustes accesibles con teclado y ampliación del sistema',
       (tester) async {
     await openApp(tester, width: 320);
-    await tapKey(tester, 'bottom-settings');
+    await tapKey(tester, 'header-settings');
     await tapKey(tester, 'settings-appearance');
     await tapKey(tester, 'text-scale-1.3');
     tester.platformDispatcher.textScaleFactorTestValue = 1.8;

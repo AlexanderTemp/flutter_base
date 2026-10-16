@@ -11,7 +11,12 @@ ThemeData workspaceTheme(Brightness brightness) {
     colorScheme: ColorScheme.fromSeed(
       seedColor: tokens.fillColorScheme.themeThick,
       brightness: brightness,
+      primary: tokens.fillColorScheme.themeThick,
+      onPrimary: tokens.textColorScheme.onFill,
       surface: tokens.surfaceColorScheme.primary,
+      onSurface: tokens.textColorScheme.primary,
+      error: tokens.fillColorScheme.errorThick,
+      onError: tokens.textColorScheme.onFill,
     ),
     textTheme: TextTheme(
       bodyMedium:

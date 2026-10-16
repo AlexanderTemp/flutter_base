@@ -57,6 +57,8 @@ class _AFBaseButtonState extends State<AFBaseButton> {
   bool isHovering = false;
   bool isFocused = false;
 
+  bool get enabled => !widget.disabled && widget.onTap != null;
+
   @override
   void dispose() {
     focusNode.dispose();
@@ -69,61 +71,71 @@ class _AFBaseButtonState extends State<AFBaseButton> {
     final Color backgroundColor = _buildBackgroundColor(context);
     final Color ringColor = _buildRingColor(context);
 
-    return Actions(
-      actions: {
-        ActivateIntent: CallbackAction<ActivateIntent>(
-          onInvoke: (_) {
-            if (!widget.disabled) {
-              widget.onTap?.call();
-            }
-            return;
-          },
-        ),
-      },
-      child: Focus(
-        focusNode: focusNode,
-        onFocusChange: (isFocused) {
-          setState(() => this.isFocused = isFocused);
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      child: Actions(
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              if (enabled) {
+                widget.onTap?.call();
+              }
+              return;
+            },
+          ),
         },
-        autofocus: widget.autofocus,
-        child: MouseRegion(
-          cursor: widget.onTap == null
-              ? SystemMouseCursors.basic
-              : widget.disabled
-                  ? SystemMouseCursors.basic
-                  : SystemMouseCursors.click,
-          onEnter: (_) => setState(() => isHovering = true),
-          onExit: (_) => setState(() => isHovering = false),
-          child: GestureDetector(
-            onTap: widget.disabled ? null : widget.onTap,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                minWidth: kMinInteractiveDimension,
-                minHeight: kMinInteractiveDimension,
-              ),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(widget.borderRadius),
-                  border: isFocused && widget.showFocusRing
-                      ? Border.all(
-                          color: ringColor,
-                          width: 2,
-                          strokeAlign: BorderSide.strokeAlignOutside,
-                        )
-                      : null,
+        child: Focus(
+          focusNode: focusNode,
+          canRequestFocus: enabled,
+          onFocusChange: (isFocused) {
+            setState(() => this.isFocused = isFocused);
+          },
+          autofocus: widget.autofocus,
+          child: MouseRegion(
+            cursor: widget.onTap == null
+                ? SystemMouseCursors.basic
+                : widget.disabled
+                    ? SystemMouseCursors.basic
+                    : SystemMouseCursors.click,
+            onEnter: (_) => setState(() => isHovering = true),
+            onExit: (_) => setState(() => isHovering = false),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: enabled ? widget.onTap : null,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minWidth: kMinInteractiveDimension,
+                  minHeight: kMinInteractiveDimension,
                 ),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: backgroundColor,
-                    border: Border.all(color: borderColor),
                     borderRadius: BorderRadius.circular(widget.borderRadius),
+                    border: isFocused && widget.showFocusRing
+                        ? Border.all(
+                            color: ringColor,
+                            width: 2,
+                            strokeAlign: BorderSide.strokeAlignOutside,
+                          )
+                        : null,
                   ),
-                  child: Padding(
-                    padding: widget.padding,
-                    child: widget.builder(
-                      context,
-                      isHovering,
-                      widget.disabled,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: backgroundColor,
+                      border: Border.all(color: borderColor),
+                      borderRadius: BorderRadius.circular(widget.borderRadius),
+                    ),
+                    child: Padding(
+                      padding: widget.padding,
+                      child: Center(
+                        widthFactor: 1,
+                        heightFactor: 1,
+                        child: widget.builder(
+                          context,
+                          isHovering,
+                          widget.disabled,
+                        ),
+                      ),
                     ),
                   ),
                 ),

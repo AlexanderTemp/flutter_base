@@ -4,7 +4,7 @@
 
 ## Qué se implementó
 
-- **Móvil, menos de 900 px:** barra inferior con Tareas, Buscar, Crear y Ajustes. El drawer queda disponible para los filtros Todas, Pendientes y Completadas.
+- **Móvil, menos de 900 px:** barra inferior con Tareas, Buscar y Crear. Ajustes se abre con el botón de la cabecera, junto al cambio de tema. El drawer queda disponible para los filtros Todas, Pendientes y Completadas.
 - **Escritorio, desde 900 px:** barra lateral con destinos y filtros. La barra inferior desaparece.
 - **Buscar:** abre la lista con filtro Todas y enfoca el campo. La consulta se conserva al visitar Ajustes; crear una tarea la limpia para mostrar la tarea nueva.
 - **Crear:** es una acción, no una pestaña vacía. Abre el formulario desde cualquier sección. Cancelar conserva la sección; crear vuelve a Tareas.
