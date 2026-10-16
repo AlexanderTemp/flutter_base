@@ -165,6 +165,7 @@ class WorkspaceSidebar extends StatelessWidget {
                         label: destination.label,
                         icon: destination.icon,
                         selected: this.destination == destination,
+                        expand: true,
                         onTap: () => onNavigate(destination),
                       ),
                     ),

@@ -11,9 +11,37 @@ class NewTaskDialog extends StatefulWidget {
 class _NewTaskDialogState extends State<NewTaskDialog> {
   final _input = TextEditingController();
   final _fieldKey = GlobalKey<AFTextFieldState>();
+  final _focus = FocusNode();
+  Animation<double>? _routeAnimation;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_routeAnimation != null) return;
+    // Abrir el teclado durante la transición hace competir ambas animaciones
+    // por los mismos fotogramas; se enfoca cuando el diálogo ya está visible.
+    final animation = ModalRoute.of(context)?.animation;
+    if (animation == null || animation.isCompleted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _requestFocus());
+    } else {
+      _routeAnimation = animation..addStatusListener(_onRouteStatus);
+    }
+  }
+
+  void _onRouteStatus(AnimationStatus status) {
+    if (status != AnimationStatus.completed) return;
+    _routeAnimation?.removeStatusListener(_onRouteStatus);
+    _requestFocus();
+  }
+
+  void _requestFocus() {
+    if (mounted) _focus.requestFocus();
+  }
 
   @override
   void dispose() {
+    _routeAnimation?.removeStatusListener(_onRouteStatus);
+    _focus.dispose();
     _input.dispose();
     super.dispose();
   }
@@ -29,8 +57,7 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = AppFlowyTheme.of(context);
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+    return _KeyboardInset(
       child: AFModal(
         constraints: const BoxConstraints(maxWidth: 440),
         child: SingleChildScrollView(
@@ -52,8 +79,8 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
                 child: AFTextField(
                   key: _fieldKey,
                   controller: _input,
+                  focusNode: _focus,
                   hintText: '¿Qué quieres hacer?',
-                  autoFocus: true,
                   maxLength: 120,
                   onChanged: (_) => _fieldKey.currentState!.clearError(),
                   onSubmitted: (_) => _submit(),
@@ -86,4 +113,18 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
       ),
     );
   }
+}
+
+/// Solo este widget depende del teclado: en cada fotograma de su animación se
+/// recalcula el margen y el contenido del diálogo (misma instancia) no se reconstruye.
+class _KeyboardInset extends StatelessWidget {
+  const _KeyboardInset({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+        child: child,
+      );
 }

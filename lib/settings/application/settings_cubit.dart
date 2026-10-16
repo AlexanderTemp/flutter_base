@@ -42,6 +42,24 @@ class SettingsState {
         profileBio: profileBio ?? this.profileBio,
         avatarColor: avatarColor ?? this.avatarColor,
       );
+
+  // Igualdad por valor: Cubit no emite un estado igual al actual y los
+  // BlocBuilder/select comparan sin reconstruir de más.
+  @override
+  bool operator ==(Object other) =>
+      other is SettingsState &&
+      other.themeMode == themeMode &&
+      other.textScale == textScale &&
+      other.compact == compact &&
+      other.showCompleted == showCompleted &&
+      other.workspaceName == workspaceName &&
+      other.profileName == profileName &&
+      other.profileBio == profileBio &&
+      other.avatarColor == avatarColor;
+
+  @override
+  int get hashCode => Object.hash(themeMode, textScale, compact, showCompleted,
+      workspaceName, profileName, profileBio, avatarColor);
 }
 
 class SettingsCubit extends Cubit<SettingsState> {

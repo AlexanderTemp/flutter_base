@@ -1,10 +1,21 @@
 import 'package:appflowy_ui/appflowy_ui.dart';
 import 'package:flutter/material.dart';
 
-ThemeData workspaceTheme(Brightness brightness) {
-  final builder = AppFlowyDefaultTheme();
-  final tokens =
-      brightness == Brightness.light ? builder.light() : builder.dark();
+// Instancias únicas: AppFlowyThemeData no implementa ==, así que crear una nueva
+// en cada build notifica a todos los dependientes de AppFlowyTheme.
+final _appFlowyLight = AppFlowyDefaultTheme().light();
+final _appFlowyDark = AppFlowyDefaultTheme().dark();
+
+/// Tokens AppFlowy del brillo indicado, siempre la misma instancia.
+AppFlowyThemeData appFlowyTheme(Brightness brightness) =>
+    brightness == Brightness.dark ? _appFlowyDark : _appFlowyLight;
+
+// ColorScheme.fromSeed calcula paletas tonales; se construye una vez por brillo.
+final workspaceLightTheme = _workspaceTheme(Brightness.light);
+final workspaceDarkTheme = _workspaceTheme(Brightness.dark);
+
+ThemeData _workspaceTheme(Brightness brightness) {
+  final tokens = appFlowyTheme(brightness);
   return ThemeData(
     brightness: brightness,
     scaffoldBackgroundColor: tokens.backgroundColorScheme.primary,

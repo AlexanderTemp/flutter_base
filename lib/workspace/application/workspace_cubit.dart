@@ -14,10 +14,15 @@ class WorkspaceTask {
 
 class WorkspaceState {
   WorkspaceState(Iterable<WorkspaceTask> tasks)
-      : tasks = List.unmodifiable(tasks);
+      : this._(List<WorkspaceTask>.unmodifiable(tasks));
+
+  // Calculado una vez sobre la lista ya copiada: la interfaz lo lee varias
+  // veces en cada build.
+  WorkspaceState._(this.tasks)
+      : completedCount = tasks.where((task) => task.completed).length;
 
   final List<WorkspaceTask> tasks;
-  int get completedCount => tasks.where((task) => task.completed).length;
+  final int completedCount;
 }
 
 class WorkspaceCubit extends Cubit<WorkspaceState> {

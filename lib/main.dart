@@ -23,22 +23,24 @@ class WorkspaceApp extends StatelessWidget {
           BlocProvider(
               create: (_) => AuthCubit(authRepository ?? DemoAuthRepository())),
         ],
+        // Solo tema y tamaño de texto afectan a la raíz; el resto de ajustes
+        // reconstruye únicamente los widgets que los leen.
         child: BlocBuilder<SettingsCubit, SettingsState>(
+          buildWhen: (previous, current) =>
+              previous.themeMode != current.themeMode ||
+              previous.textScale != current.textScale,
           builder: (context, settings) => MaterialApp(
             title: AppInfo.name,
             debugShowCheckedModeBanner: false,
-            theme: workspaceTheme(Brightness.light),
-            darkTheme: workspaceTheme(Brightness.dark),
+            theme: workspaceLightTheme,
+            darkTheme: workspaceDarkTheme,
             themeMode: settings.themeMode,
             builder: (context, child) {
-              final builder = AppFlowyDefaultTheme();
               final media = MediaQuery.of(context);
               final theme = Theme.of(context);
               final dark = theme.brightness == Brightness.dark;
               return AppFlowyTheme(
-                data: Theme.of(context).brightness == Brightness.dark
-                    ? builder.dark()
-                    : builder.light(),
+                data: appFlowyTheme(theme.brightness),
                 child: MediaQuery(
                   // Conserva la ampliación accesible del sistema operativo.
                   data: media.copyWith(
@@ -98,4 +100,15 @@ class _ScaledTextScaler extends TextScaler {
 
   @override
   double get textScaleFactor => scale(14) / 14;
+
+  // Igualdad por valor: este builder se repite en cada fotograma de la animación
+  // del teclado y una instancia nueva no debe reconstruir todos los textos.
+  @override
+  bool operator ==(Object other) =>
+      other is _ScaledTextScaler &&
+      other.system == system &&
+      other.factor == factor;
+
+  @override
+  int get hashCode => Object.hash(system, factor);
 }

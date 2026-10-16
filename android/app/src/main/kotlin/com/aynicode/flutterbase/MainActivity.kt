@@ -1,4 +1,4 @@
-package com.example.flutter_workspace
+package com.aynicode.flutterbase
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine

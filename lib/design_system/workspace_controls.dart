@@ -10,6 +10,7 @@ class WorkspaceChoice extends StatelessWidget {
     required this.onTap,
     this.icon,
     this.vertical = false,
+    this.expand = false,
   });
 
   final String label;
@@ -17,6 +18,10 @@ class WorkspaceChoice extends StatelessWidget {
   final VoidCallback onTap;
   final IconData? icon;
   final bool vertical;
+
+  /// Ocupa todo el ancho con el contenido alineado al inicio (listas de
+  /// navegación). Sin él se ajusta al contenido, para filas de opciones en `Wrap`.
+  final bool expand;
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +55,9 @@ class WorkspaceChoice extends StatelessWidget {
                 : Colors.transparent,
         builder: (_, __, ___) => vertical
             ? Column(mainAxisSize: MainAxisSize.min, children: children)
-            : Row(mainAxisSize: MainAxisSize.min, children: children),
+            : Row(
+                mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
+                children: children),
       ),
     );
   }
@@ -103,8 +110,10 @@ class WorkspaceToggle extends StatelessWidget {
           ),
           const SizedBox(width: 16),
           AnimatedContainer(
-            duration: MediaQuery.of(context).disableAnimations ||
-                    MediaQuery.of(context).accessibleNavigation
+            // Accesos por aspecto: MediaQuery.of también reconstruiría con cada
+            // fotograma de la animación del teclado.
+            duration: MediaQuery.disableAnimationsOf(context) ||
+                    MediaQuery.accessibleNavigationOf(context)
                 ? Duration.zero
                 : const Duration(milliseconds: 150),
             width: 40,

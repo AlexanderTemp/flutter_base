@@ -37,8 +37,12 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
   final _searchController = TextEditingController();
   final _searchFocus = FocusNode();
   WorkspaceDestination _destination = WorkspaceDestination.tasks;
+  // La galería se construye al visitarla por primera vez y luego conserva su estado.
+  bool _componentsBuilt = false;
   TaskFilter _filter = TaskFilter.all;
-  String _query = '';
+  // Misma instancia mientras `active` no cambie: Flutter omite su subárbol cuando
+  // esta página se reconstruye por navegación, filtros o tareas.
+  SettingsPage? _settingsPage;
 
   @override
   void dispose() {
@@ -51,6 +55,7 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       _destination = destination;
+      if (destination == WorkspaceDestination.components) _componentsBuilt = true;
       if (destination == WorkspaceDestination.search) _filter = TaskFilter.all;
     });
     if (destination == WorkspaceDestination.search) {
@@ -71,24 +76,32 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
       setState(() {
         _destination = WorkspaceDestination.tasks;
         _filter = TaskFilter.all;
-        _query = '';
       });
     }
+  }
+
+  SettingsPage _settings() {
+    final active = _destination == WorkspaceDestination.settings;
+    if (_settingsPage?.active != active) {
+      _settingsPage = SettingsPage(active: active);
+    }
+    return _settingsPage!;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = AppFlowyTheme.of(context);
-    final settings = context.watch<SettingsCubit>().state;
+    // Solo el dato que muestra la cabecera; editar el perfil no reconstruye esta página.
+    final workspaceName =
+        context.select((SettingsCubit cubit) => cubit.state.workspaceName);
     return LayoutBuilder(builder: (context, constraints) {
       final wide = constraints.maxWidth >= 900;
-      return BlocBuilder<WorkspaceCubit, WorkspaceState>(
-          builder: (context, state) {
-        Widget sidebar() => WorkspaceSidebar(
+      Widget sidebar() => BlocBuilder<WorkspaceCubit, WorkspaceState>(
+            builder: (context, state) => WorkspaceSidebar(
               key: const ValueKey('workspace-sidebar'),
               filter: _filter,
               state: state,
-              workspaceName: settings.workspaceName,
+              workspaceName: workspaceName,
               destination: _destination,
               onNavigate: (destination) {
                 if (!wide) Navigator.of(context).pop();
@@ -105,249 +118,320 @@ class _WorkspaceViewState extends State<_WorkspaceView> {
                 if (!wide) Navigator.of(context).pop();
                 _addTask();
               },
-            );
-        return Scaffold(
-          key: _scaffoldKey,
-          drawer: wide
-              ? null
-              : Drawer(
-                  width: 280,
-                  shape: const RoundedRectangleBorder(),
-                  child: sidebar()),
-          bottomNavigationBar: wide
-              ? null
-              : WorkspaceBottomNavigation(
-                  destination: _destination,
-                  onNavigate: _navigate,
-                  onCreate: _addTask,
-                ),
-          body: SafeArea(
-            child: Row(children: [
-              if (wide) ...[
-                SizedBox(width: 248, child: sidebar()),
-                VerticalDivider(
-                    width: 1, color: theme.borderColorScheme.primary),
-              ],
-              Expanded(
-                  child: Column(children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                      border: Border(
-                          bottom: BorderSide(
-                              color: theme.borderColorScheme.primary))),
-                  child: Row(children: [
-                    if (!wide)
-                      WorkspaceIconButton(
-                          label: 'Abrir navegación',
-                          icon: Icons.menu,
-                          onTap: () => _scaffoldKey.currentState!.openDrawer()),
-                    const AppLogo(),
-                    const SizedBox(width: 8),
-                    Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(AppInfo.name, overflow: TextOverflow.ellipsis,
-                              style: theme.textStyle.body.enhanced(color: theme.textColorScheme.primary)),
-                            Text(
-                            '${settings.workspaceName} / ${_destination.label}',
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textStyle.caption.standard(
-                                color: theme.textColorScheme.secondary)),
-                          ],
-                        )),
-                    IconButton(
-                      tooltip: 'Cambiar tema',
-                      icon: const Icon(Icons.contrast),
-                      onPressed: widget.onToggleTheme,
-                    ),
-                    IconButton(
-                      key: const ValueKey('header-settings'),
-                      tooltip: 'Ajustes',
-                      icon: const Icon(Icons.settings_outlined),
-                      onPressed: () => _navigate(WorkspaceDestination.settings),
-                    ),
-                  ]),
-                ),
-                Expanded(
-                  child: IndexedStack(
-                    index: switch (_destination) {
-                      WorkspaceDestination.settings => 1,
-                      WorkspaceDestination.components => 2,
-                      _ => 0,
-                    },
+            ),
+          );
+      return Scaffold(
+        key: _scaffoldKey,
+        drawer: wide
+            ? null
+            : Drawer(
+                width: 280,
+                shape: const RoundedRectangleBorder(),
+                child: sidebar()),
+        bottomNavigationBar: wide
+            ? null
+            : WorkspaceBottomNavigation(
+                destination: _destination,
+                onNavigate: _navigate,
+                onCreate: _addTask,
+              ),
+        body: SafeArea(
+          child: Row(children: [
+            if (wide) ...[
+              SizedBox(width: 248, child: sidebar()),
+              VerticalDivider(width: 1, color: theme.borderColorScheme.primary),
+            ],
+            Expanded(
+                child: Column(children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                    border: Border(
+                        bottom:
+                            BorderSide(color: theme.borderColorScheme.primary))),
+                child: Row(children: [
+                  if (!wide)
+                    WorkspaceIconButton(
+                        label: 'Abrir navegación',
+                        icon: Icons.menu,
+                        onTap: () => _scaffoldKey.currentState!.openDrawer()),
+                  const AppLogo(),
+                  const SizedBox(width: 8),
+                  Expanded(
+                      child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TickerMode(
-                        enabled: _destination == WorkspaceDestination.tasks ||
-                            _destination == WorkspaceDestination.search,
-                        child: _content(context, state, wide, settings),
-                      ),
-                      TickerMode(
-                        enabled: _destination == WorkspaceDestination.settings,
-                        child: SettingsPage(
-                            active:
-                                _destination == WorkspaceDestination.settings),
-                      ),
-                      TickerMode(
-                        enabled: _destination == WorkspaceDestination.components,
-                        child: const ComponentsPage(),
-                      ),
+                      Text(AppInfo.name,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textStyle.body
+                              .enhanced(color: theme.textColorScheme.primary)),
+                      Text('$workspaceName / ${_destination.label}',
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textStyle.caption
+                              .standard(color: theme.textColorScheme.secondary)),
                     ],
+                  )),
+                  IconButton(
+                    tooltip: 'Cambiar tema',
+                    icon: const Icon(Icons.contrast),
+                    onPressed: widget.onToggleTheme,
                   ),
+                  IconButton(
+                    key: const ValueKey('header-settings'),
+                    tooltip: 'Ajustes',
+                    icon: const Icon(Icons.settings_outlined),
+                    onPressed: () => _navigate(WorkspaceDestination.settings),
+                  ),
+                ]),
+              ),
+              Expanded(
+                child: IndexedStack(
+                  index: switch (_destination) {
+                    WorkspaceDestination.settings => 1,
+                    WorkspaceDestination.components => 2,
+                    _ => 0,
+                  },
+                  children: [
+                    TickerMode(
+                      enabled: _destination == WorkspaceDestination.tasks ||
+                          _destination == WorkspaceDestination.search,
+                      child: _TasksPane(
+                        wide: wide,
+                        filter: _filter,
+                        searching: _destination == WorkspaceDestination.search,
+                        searchController: _searchController,
+                        searchFocus: _searchFocus,
+                        onCreate: _addTask,
+                      ),
+                    ),
+                    TickerMode(
+                      enabled: _destination == WorkspaceDestination.settings,
+                      child: _settings(),
+                    ),
+                    TickerMode(
+                      enabled: _destination == WorkspaceDestination.components,
+                      child: _componentsBuilt
+                          ? const ComponentsPage()
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
                 ),
-              ])),
-            ]),
-          ),
-        );
-      });
+              ),
+            ])),
+          ]),
+        ),
+      );
     });
   }
+}
 
-  Widget _content(BuildContext context, WorkspaceState state, bool wide,
-      SettingsState settings) {
+/// Lista de tareas con búsqueda. Lee tareas y preferencias por sí misma y la
+/// búsqueda solo reconstruye la lista filtrada, no la página.
+class _TasksPane extends StatelessWidget {
+  const _TasksPane({
+    required this.wide,
+    required this.filter,
+    required this.searching,
+    required this.searchController,
+    required this.searchFocus,
+    required this.onCreate,
+  });
+
+  final bool wide;
+  final TaskFilter filter;
+  final bool searching;
+  final TextEditingController searchController;
+  final FocusNode searchFocus;
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = AppFlowyTheme.of(context);
+    final state = context.watch<WorkspaceCubit>().state;
+    final (showCompleted, compact) = context.select((SettingsCubit cubit) =>
+        (cubit.state.showCompleted, cubit.state.compact));
     final tasks = state.tasks.where((task) {
-      final matchesFilter = switch (_filter) {
+      final matchesFilter = switch (filter) {
         TaskFilter.all => true,
         TaskFilter.pending => !task.completed,
         TaskFilter.completed => task.completed,
       };
-      final visible = settings.showCompleted ||
-          !task.completed ||
-          _filter == TaskFilter.completed;
       return matchesFilter &&
-          visible &&
-          _normalizeSearch(task.title).contains(_query);
+          (showCompleted || !task.completed || filter == TaskFilter.completed);
     }).toList();
 
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1000),
-        child: ListView(
-          padding: EdgeInsets.symmetric(
-              horizontal: wide ? 64 : 20, vertical: wide ? 56 : 28),
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                    color: theme.fillColorScheme.infoLight,
-                    borderRadius: BorderRadius.circular(theme.borderRadius.l)),
-                child: WorkspaceIcon('type_page',
-                    size: 32, color: theme.textColorScheme.action),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-                _destination == WorkspaceDestination.search
-                    ? 'Buscar'
-                    : 'Mis tareas',
-                style: theme.textStyle.heading1
-                    .enhanced(color: theme.textColorScheme.primary)),
-            const SizedBox(height: 12),
-            Text('Un lugar tranquilo para tus ideas y tus próximos pasos.',
-                style: theme.textStyle.title
-                    .standard(color: theme.textColorScheme.secondary)),
-            const SizedBox(height: 24),
-            Wrap(spacing: 16, runSpacing: 8, children: [
-              Text('${state.tasks.length - state.completedCount} pendientes',
-                  style: theme.textStyle.body
-                      .standard(color: theme.textColorScheme.secondary)),
-              Text('${state.completedCount} completadas',
-                  style: theme.textStyle.body
-                      .standard(color: theme.textColorScheme.secondary)),
-            ]),
-            const SizedBox(height: 36),
-            Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Row(mainAxisSize: MainAxisSize.min, children: [
-                  const WorkspaceIcon('type_todo'),
-                  const SizedBox(width: 8),
-                  Text(_filter.label,
-                      style: theme.textStyle.title
-                          .enhanced(color: theme.textColorScheme.primary)),
-                ]),
-                Semantics(
-                  button: true,
-                  container: true,
-                  child: AFFilledTextButton.primary(
-                    key: const ValueKey('new-task'),
-                    text: 'Nueva tarea',
-                    onTap: _addTask,
+        child: CustomScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          slivers: [
+            SliverPadding(
+              padding: EdgeInsets.symmetric(
+                  horizontal: wide ? 64 : 20, vertical: wide ? 56 : 28),
+              sliver: SliverMainAxisGroup(slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                            color: theme.fillColorScheme.infoLight,
+                            borderRadius:
+                                BorderRadius.circular(theme.borderRadius.l)),
+                        child: WorkspaceIcon('type_page',
+                            size: 32, color: theme.textColorScheme.action),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(searching ? 'Buscar' : 'Mis tareas',
+                          style: theme.textStyle.heading1
+                              .enhanced(color: theme.textColorScheme.primary)),
+                      const SizedBox(height: 12),
+                      Text(
+                          'Un lugar tranquilo para tus ideas y tus próximos pasos.',
+                          style: theme.textStyle.title
+                              .standard(color: theme.textColorScheme.secondary)),
+                      const SizedBox(height: 24),
+                      Wrap(spacing: 16, runSpacing: 8, children: [
+                        Text(
+                            '${state.tasks.length - state.completedCount} pendientes',
+                            style: theme.textStyle.body.standard(
+                                color: theme.textColorScheme.secondary)),
+                        Text('${state.completedCount} completadas',
+                            style: theme.textStyle.body.standard(
+                                color: theme.textColorScheme.secondary)),
+                      ]),
+                      const SizedBox(height: 36),
+                      SizedBox(
+                        width: double.infinity,
+                        child: Wrap(
+                          spacing: 16,
+                          runSpacing: 16,
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Row(mainAxisSize: MainAxisSize.min, children: [
+                              const WorkspaceIcon('type_todo'),
+                              const SizedBox(width: 8),
+                              Text(filter.label,
+                                  style: theme.textStyle.title.enhanced(
+                                      color: theme.textColorScheme.primary)),
+                            ]),
+                            Semantics(
+                              button: true,
+                              container: true,
+                              child: AFFilledTextButton.primary(
+                                key: const ValueKey('new-task'),
+                                text: 'Nueva tarea',
+                                onTap: onCreate,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Semantics(
+                          label: 'Buscar tareas',
+                          child: AFTextField(
+                            key: const ValueKey('search-tasks'),
+                            controller: searchController,
+                            focusNode: searchFocus,
+                            hintText: 'Buscar en esta página…',
+                            size: AFTextFieldSize.m,
+                            // Solo el icono escucha el texto para alternar lupa/limpiar.
+                            suffixIconBuilder: (_, __) =>
+                                ValueListenableBuilder<TextEditingValue>(
+                              valueListenable: searchController,
+                              builder: (_, value, __) => value.text.isEmpty
+                                  ? const Padding(
+                                      padding: EdgeInsets.all(8),
+                                      child:
+                                          WorkspaceIcon('search_icon', size: 18))
+                                  : WorkspaceIconButton(
+                                      label: 'Limpiar búsqueda',
+                                      icon: Icons.close,
+                                      onTap: searchController.clear),
+                            ),
+                          )),
+                      const SizedBox(height: 16),
+                    ],
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Semantics(
-                label: 'Buscar tareas',
-                child: AFTextField(
-                  key: const ValueKey('search-tasks'),
-                  controller: _searchController,
-                  focusNode: _searchFocus,
-                  hintText: 'Buscar en esta página…',
-                  size: AFTextFieldSize.m,
-                  onChanged: (value) =>
-                      setState(() => _query = _normalizeSearch(value.trim())),
-                  suffixIconBuilder: (_, __) => _searchController.text.isEmpty
-                      ? const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: WorkspaceIcon('search_icon', size: 18))
-                      : WorkspaceIconButton(
-                          label: 'Limpiar búsqueda',
-                          icon: Icons.close,
-                          onTap: () => setState(() {
-                                _searchController.clear();
-                                _query = '';
-                              })),
-                )),
-            const SizedBox(height: 16),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                border: Border.all(color: theme.borderColorScheme.primary),
-                borderRadius: BorderRadius.circular(theme.borderRadius.m),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                    child: Text('NOMBRE DE LA TAREA',
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: searchController,
+                  builder: (context, value, _) {
+                    final query = _normalizeSearch(value.text.trim());
+                    final visible = query.isEmpty
+                        ? tasks
+                        : [
+                            for (final task in tasks)
+                              if (_normalizeSearch(task.title).contains(query))
+                                task
+                          ];
+                    return DecoratedSliver(
+                      decoration: BoxDecoration(
+                        border:
+                            Border.all(color: theme.borderColorScheme.primary),
+                        borderRadius:
+                            BorderRadius.circular(theme.borderRadius.m),
+                      ),
+                      sliver: SliverMainAxisGroup(slivers: [
+                        SliverToBoxAdapter(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 12),
+                                child: Text('NOMBRE DE LA TAREA',
+                                    style: theme.textStyle.caption.enhanced(
+                                        color: theme.textColorScheme.secondary)),
+                              ),
+                              Divider(
+                                  height: 1,
+                                  color: theme.borderColorScheme.primary),
+                              if (visible.isEmpty)
+                                Padding(
+                                    padding: const EdgeInsets.all(24),
+                                    child: Text('No hay tareas que coincidan.',
+                                        style: theme.textStyle.body.standard(
+                                            color: theme
+                                                .textColorScheme.secondary))),
+                            ],
+                          ),
+                        ),
+                        // Perezosa: solo construye las filas visibles.
+                        SliverList.builder(
+                          itemCount: visible.length,
+                          itemBuilder: (context, index) {
+                            final task = visible[index];
+                            return WorkspaceTaskRow(
+                              key: ValueKey('task-${task.id}'),
+                              task: task,
+                              compact: compact,
+                              onToggle: () => context
+                                  .read<WorkspaceCubit>()
+                                  .toggleTask(task.id),
+                            );
+                          },
+                        ),
+                      ]),
+                    );
+                  },
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 24),
+                    child: Text(
+                        'Demo educativa · Los cambios se mantienen solo durante esta sesión.',
                         style: theme.textStyle.caption
-                            .enhanced(color: theme.textColorScheme.secondary)),
+                            .standard(color: theme.textColorScheme.secondary)),
                   ),
-                  Divider(height: 1, color: theme.borderColorScheme.primary),
-                  if (tasks.isEmpty)
-                    Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text('No hay tareas que coincidan.',
-                            style: theme.textStyle.body.standard(
-                                color: theme.textColorScheme.secondary))),
-                  for (final task in tasks)
-                    WorkspaceTaskRow(
-                      key: ValueKey('task-${task.id}'),
-                      task: task,
-                      compact: settings.compact,
-                      onToggle: () =>
-                          context.read<WorkspaceCubit>().toggleTask(task.id),
-                    ),
-                ],
-              ),
+                ),
+              ]),
             ),
-            const SizedBox(height: 24),
-            Text(
-                'Demo educativa · Los cambios se mantienen solo durante esta sesión.',
-                style: theme.textStyle.caption
-                    .standard(color: theme.textColorScheme.secondary)),
           ],
         ),
       ),

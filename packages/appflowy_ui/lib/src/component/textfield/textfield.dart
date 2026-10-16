@@ -264,6 +264,7 @@ class _AFTextFieldState extends AFTextFieldState {
   void syncError({
     required String errorText,
   }) {
+    if (hasError && this.errorText == errorText) return;
     setState(() {
       hasError = true;
       this.errorText = errorText;
@@ -272,6 +273,8 @@ class _AFTextFieldState extends AFTextFieldState {
 
   @override
   void clearError() {
+    // Se llama en cada pulsación; sin error no hay nada que reconstruir.
+    if (!hasError && errorText.isEmpty) return;
     setState(() {
       hasError = false;
       errorText = '';

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../app_info.dart';
 import '../../design_system/surfaces.dart';
+import '../../design_system/width_breakpoint.dart';
 import '../../design_system/workspace_controls.dart';
 import '../../auth/application/auth_cubit.dart';
 import '../../auth/presentation/sign_in_page.dart';
@@ -74,8 +75,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final theme = AppFlowyTheme.of(context);
     final settings = context.watch<SettingsCubit>().state;
     final auth = context.watch<AuthCubit>().state;
-    return LayoutBuilder(builder: (context, constraints) {
-      final wide = constraints.maxWidth >= 720;
+    return WidthBreakpoint(breakpoint: 720, builder: (context, wide) {
       final section = _section ?? SettingsSection.profile;
       Widget tile(SettingsSection item, String subtitle) => SettingsTile(
           key: ValueKey('settings-${item.name}'),

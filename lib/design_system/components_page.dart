@@ -29,17 +29,19 @@ class _ComponentsPageState extends State<ComponentsPage> {
   _Priority? _priority = _Priority.normal;
   bool _enabled = true;
   int _choice = 0;
-  String _action = 'Prueba un componente para ver su respuesta.';
+  // Solo el texto de respuesta escucha este valor; pulsar un ejemplo no reconstruye la galería.
+  final _action = ValueNotifier('Prueba un componente para ver su respuesta.');
 
   @override
   void dispose() {
     _name.dispose();
     _dropdown.dispose();
     _popover.dispose();
+    _action.dispose();
     super.dispose();
   }
 
-  void _respond(String message) => setState(() => _action = message);
+  void _respond(String message) => _action.value = message;
 
   void _validate() {
     if (_name.text.trim().isEmpty) {
@@ -103,9 +105,11 @@ class _ComponentsPageState extends State<ComponentsPage> {
         const SizedBox(height: 8),
         const Text('Plantilla interactiva. Cambia el tema y el tamaño de texto desde Ajustes para probar cada ejemplo.'),
         const SizedBox(height: 12),
-        Semantics(liveRegion: true, child: Text(_action,
-          key: const ValueKey('component-feedback'),
-          style: t.textStyle.body.enhanced(color: t.textColorScheme.action))),
+        Semantics(liveRegion: true, child: ValueListenableBuilder<String>(
+          valueListenable: _action,
+          builder: (_, action, __) => Text(action,
+            key: const ValueKey('component-feedback'),
+            style: t.textStyle.body.enhanced(color: t.textColorScheme.action)))),
         const SizedBox(height: 20),
         _section('Marca, tipografía y etiquetas', 'AppInfo · AppFlowyTheme · AfPill', [
           Row(children: [
